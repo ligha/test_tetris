@@ -180,7 +180,7 @@ const DROP_MIN_MS=40;    // 1マスの落下でもこれだけは滑らかに
 const DROP_MAX_MS=120;   // 長い落下は短縮して手触りを壊さない
 let bgmOn=true,bgmPlaying=false,bgmGain=null,bgmBar=0,bgmNext=0,bgmTimer=null,armed=false;
 let bgmTrack=0,bgmPending=0;
-const HI_KEY='tetris_hi_qwen3';
+const HI_KEY='tetris_hi';
 let hi=0,hiLevel=0,newHi=false;
 let sfxGain=null;
 let bgmFilter=null,bgmLfo=null,bgmVib=null,bgmComp=null,bgmDelay=null,bgmFb=null,bgmWet=null;
@@ -1343,7 +1343,7 @@ function demoSoftGap(){return Math.round(70+Math.random()*60);}   // 1歩ずつ�
    プレイヤーの操作をブロック単位で記録し、デモで時々そのまま再現する。
    記録は localStorage に直近 REPLAY_MAX プレイ分だけ残す。
    （ホールドは板面の状態が揃わないと再現できないため操作記録には入れない） */
-const REPLAY_KEY='tetris_replay_qwen3';
+const REPLAY_KEY='tetris_replay';
 const REPLAY_MAX=6;        // 残すプレイ数
 const REPLAY_MIN=8;        // これ以上のブロック数から記録に残す
 const REPLAY_PIECES=80;    // 1プレイの記録上限
