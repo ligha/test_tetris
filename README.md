@@ -1,4 +1,4 @@
-# tetris_qwen3.8flash_next
+# tetris
 
 ブラウザで遊べる単一HTMLのテトリス。
 

@@ -584,7 +584,7 @@ assert(hi === 1234, 'score above record updates it live');
 assert(hiLevel === 7, 'record level stored');
 assert(String(els.hiscore.textContent) === '1234', 'high score displayed above SCORE');
 assert(els.hilevel.textContent === 'Lv 7 ★更新中', 'record level shown with update mark');
-assert(store['tetris_hi_qwen3'] === '{"score":1234,"level":7}', 'record persisted to storage');
+assert(store['tetris_hi'] === '{"score":1234,"level":7}', 'record persisted to storage');
 score = 900; hud();
 assert(hi === 1234, 'lower score does not lower the record');
 fresh();
