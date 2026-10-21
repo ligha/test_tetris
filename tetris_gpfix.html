@@ -667,6 +667,8 @@ function armAudio(){
   unlockAudio();
   bgmUi();if(started)bgmStart();
 }
+// iOSはpointerdownの中のresume()が効かないことがあるため、タッチの終端・クリックでも解錠を試す
+['touchend','click'].forEach(t=>document.addEventListener(t,()=>{if(actx&&actx.state!=='running')unlockAudio();},true));
 
 // ---- 揃ったときのエフェクト ----
 const FX={parts:[],glow:[],rings:[],flash:0,shake:0};
