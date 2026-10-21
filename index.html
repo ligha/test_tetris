@@ -616,7 +616,7 @@ function bgmStart(){
   if(muted()||!bgmOn||bgmPlaying||!armed)return;   // デモ中はBGMも鳴らさない
   try{
     actx=actx||new (window.AudioContext||window.webkitAudioContext)();
-    if(actx.state==='suspended')actx.resume();
+    if(actx.state!=='running')actx.resume();
     bgmGain=actx.createGain();bgmGain.gain.value=0.42;
     bgmFilter=actx.createBiquadFilter();bgmFilter.type='lowpass';bgmFilter.frequency.value=5200;bgmFilter.Q.value=0.6;
     if(actx.createDynamicsCompressor){                 // 層が増えるので歪みを抑える
@@ -653,13 +653,18 @@ function bgmStop(){
   if(bgmDelay){bgmDelay.disconnect();bgmDelay=null;bgmFb=null;bgmWet=null;}
   bgmUi();
 }
+// iPhone(Safari)は無音のバッファを鳴らして音声を解錠しないと出力が始まらない。
+// 解錠は毎回のタップ・キー操作で確認する（途中で suspended / interrupted に戻ることがあるため）
+function unlockAudio(){
+  try{const src=actx.createBufferSource();src.buffer=actx.createBuffer(1,1,22050);src.connect(actx.destination);src.start(0);}catch(e){}
+  if(actx.state!=='running')actx.resume();
+}
 function armAudio(){
+  if(actx&&actx.state!=='running')unlockAudio();
   if(armed)return;
   armed=true;
   try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();}catch(e){return;}
-  // iPhone(Safari)は無音のバッファを鳴らしてから音声を解錠しないと、最初の効果音（着弾音）まで出力が始まらない
-  try{const src=actx.createBufferSource();src.buffer=actx.createBuffer(1,1,22050);src.connect(actx.destination);src.start(0);}catch(e){}
-  if(actx.state==='suspended')actx.resume();
+  unlockAudio();
   bgmUi();if(started)bgmStart();
 }
 
