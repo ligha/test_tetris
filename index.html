@@ -1,0 +1,1566 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Tetris</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Tetris">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0f1220">
+<link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAIAAACyr5FlAAACzklEQVR4nO3bQYoTURRAUVucK65Apy7BgYjgZlyQmxFEHLgEp27BJTgIhIDehqS+1Etxzjj1uyE39Sb/PTx/+eoJ/MvTvf8B5hIHSRwkcZDEQRIHSRwkcZDEQRIHSRwkcZDEQRIHSRwkcZDEQRIH6dn2I95/+nXV5799fn0X5/Cw5Q7ptV/DpcuvZNo5nBgrpNvj2PIzvXx82jmceXOQxEESB0kcJHGQxEESB0kcJHGQxEESB0kcJHGQxEESB+n2ODZenTo/Pu0czrw5SJvukJ5MuxjsgvEqC+LgqIwV0qC9FaYZsbfCTMYKaf+9Fcby5iCJgyQOkjhI4iCJgyQOkjhI4iCJgyQOkjhI4iCJgyQO0v57K4zlzUEatLfCNPZWSMYKacHeyjS/v7676vMvPnz/r+fcr0ONlWu/zkuXX+2qc+6dsUI6Thxbfu6Xj6865wCOEwfLiYMkDpI4SOIgiYMkDpI4SOIgiYMkDpI4SOIgiYMkDtJx4th4Bev8+KpzDuA4cbDcoe6QnrhgvMoB42AVY4W0YG/l58e3V33+zZcf2//oI4yVVTaNlWuzuPQ/ErG3spaxQro9ji2vje2P/83eynLeHCRxkMRBEgdJHCRxkMRBEgdJHCRxkMRBEgdJHCRxkMRBuj2OjVe5lt8Es7eynDcHacFqggvGj59zv+ytkIwV0qC9lWnjiRF7K9P2XzgxVkj7761M23/hzJuDJA6SOEjiIImDJA6SOEjiIImDJA6SOEjiIImDJA6SOEj7761M23/hzJuDNGhvxQXjaeytkIwV0oK9lVWMlWlGjBV7KzMZK6T947C3Mtb+cTCWOEjiIImDJA6SOEjiIImDJA6SOEjiIImDJA6SOEjiIO0fh72VsfaPg7FG3CE9ccF4mkFxMI2xQhIHSRwkcZDEQRIHSRwkcZDEQRIHSRwkcZDEQRIHSRwkcZDEQRIH6Q8G3Lo1LjpHNwAAAABJRU5ErkJggg==">
+<style>
+:root{--bg:#0f1220;--panel:#171b2c;--line:#2a3145;--text:#e8ecf5;--muted:#8b93a8}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{touch-action:manipulation;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+button{touch-action:manipulation}
+body{margin:0;min-height:100dvh;background:radial-gradient(1200px 800px at 50% -10%,#1a2035,#0f1220);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Meiryo,sans-serif;display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-start;padding:calc(14px + env(safe-area-inset-top)) calc(18px + env(safe-area-inset-bottom))}
+.game{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start;max-width:100%}
+canvas{display:block;max-width:100%;background:#0b0e18;border:1px solid var(--line);border-radius:10px}
+#board{box-shadow:0 12px 40px rgba(0,0,0,.45)}
+.side{width:190px;display:flex;flex-direction:column;gap:10px}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px}
+.box h2{margin:0 0 8px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.stat{display:flex;justify-content:space-between;font-size:13px;margin:5px 0;color:var(--muted)}
+.stat b{color:var(--text);font-variant-numeric:tabular-nums}
+.stat.hi span{color:#a9b4cc}
+.stat.hi b{color:#ffd05e;font-variant-numeric:tabular-nums}
+.stat select{background:#22283c;border:1px solid #313a58;border-radius:6px;color:var(--text);font-size:12px;padding:4px 6px}
+.gauge{position:relative;height:8px;border-radius:6px;background:#22283c;border:1px solid #313a58;overflow:hidden;margin:7px 0 3px}
+.gauge i{display:block;height:100%;width:0;border-radius:6px;background:linear-gradient(90deg,#4f7cff,#7fb2ff);transition:width .25s ease}
+.gaugecap{display:flex;justify-content:space-between;font-size:10px;color:var(--muted)}
+.keys{font-size:11px;line-height:1.8;color:var(--muted)}
+.keys kbd{background:#22283c;border:1px solid #313a58;border-radius:4px;padding:1px 5px;color:#dfe5f2;font-family:ui-monospace,monospace;font-size:10px}
+.pad{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px}
+.pad button{background:#22283c;border:1px solid #313a58;border-radius:8px;color:var(--text);padding:11px 0;font-size:15px;cursor:pointer}
+.pad button:active{background:#313a58}
+.msg{font-size:12px;color:var(--muted);min-height:16px}
+.box button{width:100%;background:#22283c;border:1px solid #313a58;border-radius:8px;color:var(--text);padding:8px 0;font-size:12px;cursor:pointer}
+.box button:active{background:#313a58}
+.pad button.wide{grid-column:1/-1}
+button.primary{background:#2f4a7a;border-color:#4f7cff;color:#eaf1ff;font-weight:600;letter-spacing:.06em}
+button.primary:active{background:#3a5b93}
+.info{flex:0 0 100%;display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-items:flex-start;max-width:900px;margin:18px auto 8px}
+.info .box{flex:1 1 260px;min-width:0}
+.info .msg{flex:0 0 100%;text-align:center}
+/* パソコン：スコア/操作ボタン｜盤面（中央）｜Hold/Next の3列。左右の幅を揃えて盤面を画面中央に置く */
+@media(min-width:721px){
+  .game{display:grid;grid-template-columns:190px auto 190px;gap:14px;align-items:start}
+  .game>.left,.game>.side{display:contents}
+  #board{grid-column:2;grid-row:1/span 2}
+  .box.stats{grid-column:1;grid-row:1}
+  .pad{grid-column:1;grid-row:2;margin-top:0}
+  .box.hold{grid-column:3;grid-row:1}
+  .box.next{grid-column:3;grid-row:2}
+}
+@media(max-width:720px){
+  .info{display:none}
+  html,body{height:100%;overflow:hidden;overscroll-behavior:none}
+  body{height:100dvh;min-height:0;padding:max(8px,env(safe-area-inset-top)) 8px max(8px,env(safe-area-inset-bottom));align-items:flex-start}
+  .game{display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-areas:"board side" "pad pad";gap:8px;width:100%;max-width:520px;align-items:start}
+  .game>.left{display:contents}
+  #board{grid-area:board;width:calc(min(calc((100dvh - 150px - env(safe-area-inset-top) - env(safe-area-inset-bottom))/2),calc(100vw - 142px)) * 0.9);height:auto;aspect-ratio:20/42}   /* 240x504（板480 + 上部1ブロックの出現行24） */
+  .side{grid-area:side;width:auto;min-width:0;gap:6px}
+  .side .box{padding:6px}
+  .side .box h2{margin:0 0 4px;font-size:10px}
+  .side canvas{width:100%;height:auto}
+  .stat{font-size:11px;margin:3px 0;flex-wrap:wrap}
+  .stat b{margin-left:auto}
+  .gaugecap{display:none}
+  .pad{grid-area:pad;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:0;width:100%}
+  .pad button{padding:0;height:48px;font-size:18px;border-radius:10px}
+  .pad button[data-a="hold"],.pad button[data-a="bgm"],.pad button.primary{font-size:11px;letter-spacing:0}
+  .pad button.wide{grid-column:span 2;order:99}
+}
+</style>
+</head>
+<body>
+<div class="game">
+  <div class="left">
+    <canvas id="board" width="240" height="504"></canvas>
+    <div class="pad" id="pad">
+      <button id="startbtn" class="primary wide" data-a="start">START</button>
+      <button data-a="left">◀</button>
+      <button data-a="right">▶</button>
+      <button data-a="ccw">⟲</button>
+      <button data-a="cw">⟳</button>
+      <button data-a="soft">▼</button>
+      <button data-a="hard">⤓</button>
+      <button data-a="hold">HOLD</button>
+      <button data-a="bgm">BGM</button>
+    </div>
+  </div>
+  <div class="side">
+    <div class="box hold"><h2>Hold</h2><canvas id="hold" width="120" height="80"></canvas></div>
+    <div class="box next"><h2>Next</h2><canvas id="next" width="120" height="220"></canvas></div>
+    <div class="box stats">
+      <div class="stat hi"><span>ハイスコア</span><b id="hiscore">0</b></div>
+      <div class="stat hi"><span>記録レベル</span><b id="hilevel">Lv 0</b></div>
+      <div class="stat"><span>SCORE</span><b id="score">0</b></div>
+      <div class="stat"><span>LINES</span><b id="lines">0</b></div>
+      <div class="stat"><span>LEVEL</span><b id="level">1</b></div>
+      <div class="gauge"><i id="gaugefill"></i></div>
+      <div class="gaugecap"><span id="gaugenext">next: 10 lines</span><span id="gaugepct">0%</span></div>
+      <div class="stat"><span>TIME</span><b id="time">0:00</b></div>
+    </div>
+  </div>
+</div>
+<div class="info">
+    <div class="box keys kbdbox">
+      <kbd>←</kbd><kbd>→</kbd> 移動　<kbd>↑</kbd>/<kbd>X</kbd> 右回し　<kbd>Z</kbd> 左回し<br>
+      <kbd>↓</kbd> ソフトドロップ　<kbd>Space</kbd> ハードドロップ<br>
+      <kbd>C</kbd> ホールド　<kbd>P</kbd> ポーズ　<kbd>M</kbd> 音　<kbd>B</kbd> BGM<br>
+      <kbd>Enter</kbd> スタート／ポーズ（STARTボタンでも可）<br>
+      <span>デモ（アトラクト）中は無音になります</span><br>
+      <span>プレイ画面は20ブロック＋上部1ブロックの出現行（板の20行より上＝row 20）。ぷよぷよテトリスと同じルールで、ネクストミノはこの行に出現して板内へ落ちてきます。出現位置が既存ブロックと重なる、またはミノがこの行でロック（ロックアウト）するとゲームオーバーになります</span><br>
+      <span>ゲームオーバーになったミノは板には置かれず、出現行にそのまま表示され、0.5秒後に自色と白が交互に点滅します（点滅するのは出現行内の部分とNEXTパネルのミノです）</span><br>
+      <span>ハードドロップは最高速で滑らかに落下し、着弾するまで他の操作を受け付けません</span><br>
+<span>ハードドロップの着弾では板全体は震えず、火花と衝撃波の輪が広がり、落ちたブロックが光ります</span><br>
+      <span>デモは手を変え、何セルか落してから落としたり、直近のプレイを再現することがあります（記録はブラウザに残る）</span>
+    </div>
+    <div class="box keys">
+      <h2>コントローラー</h2>
+      <div class="stat"><span>接続</span><b id="gpstate">未接続</b></div>
+      <kbd>✕</kbd> ハードドロップ　<kbd>○</kbd> ホールド　<kbd>□</kbd>/<kbd>△</kbd> 回し<br>
+      <kbd>十字キー</kbd>/<kbd>Lスティック</kbd> 移動（押しっぱなしで連続）<br>
+      <kbd>L1</kbd>/<kbd>↓</kbd> ソフトドロップ　<kbd>R1</kbd> ハードドロップ　<kbd>L2</kbd> ホールド<br>
+      <kbd>START</kbd>/<kbd>SELECT</kbd>/<kbd>R2</kbd> 開始／ポーズ（同一ボタン）<br>
+      <span>振動：着弾・ライン消去・ゲームオーバー</span>
+    </div>
+    <div class="box">
+      <h2>BGM — FM音源</h2>
+      <div class="stat"><span>曲</span><b id="bgmname">Korobeiniki</b></div>
+      <div class="stat"><span>状態</span><b id="bgmstate">ON</b></div>
+      <div class="stat"><span>音色</span>
+        <select id="fmpreset">
+          <option value="bell" selected>ベル</option>
+          <option value="ep">Eピ</option>
+          <option value="brass">ブラス</option>
+        </select>
+      </div>
+      <div class="keys">レベル5ごとに曲が変わります</div>
+      <button id="bgmbtn">BGM 再生/停止</button>
+    </div>
+    <div class="msg" id="msg"></div>
+</div>
+<script>
+'use strict';
+const COLS=10,ROWS=20,CELL=24,DAS=170,ARR=40,LOCK=500,MAXRESET=15,ANIM=320;
+const TOPROWS=1,TOP=CELL*TOPROWS;   // プレイ画面＝板20ブロック＋上部1ブロック（板の20行より上の出現行＝row 20）
+const SPAWN_ROW=-1;                   // 板の20行より上の1行（row 20相当）＝ネクストミノの出現位置（ぷよぷよテトリスと同じ）
+const OVER_WHITE_MS=500;             // 原因ブロックが白くなるまでの時間
+const COLORS={I:'#3ec9e8',J:'#4a6cf0',L:'#f0862f',O:'#f4d03f',S:'#3ecf6e',T:'#b065e8',Z:'#e85555'};
+const TYPES=Object.keys(COLORS);
+const BOX={I:4,O:2,J:3,L:3,S:3,T:3,Z:3};
+// SRS のスポン状態（箱内座標, y は下向き）
+const SPAWN={I:[[0,1],[1,1],[2,1],[3,1]],J:[[0,0],[0,1],[1,1],[2,1]],L:[[2,0],[0,1],[1,1],[2,1]],O:[[0,0],[1,0],[0,1],[1,1]],S:[[1,0],[2,0],[0,1],[1,1]],T:[[1,0],[0,1],[1,1],[2,1]],Z:[[0,0],[1,0],[1,1],[2,1]]};
+const STATES={};
+for(const t of TYPES){const n=BOX[t],st=[SPAWN[t].map(p=>p.slice())];for(let s=1;s<4;s++)st.push(st[s-1].map(([x,y])=>[n-1-y,x]));STATES[t]=st;}
+// SRS キックテーブル（y 下向きに符号反転済み）
+const KICK_I={'01':[[0,0],[-2,0],[1,0],[-2,1],[1,-2]],'10':[[0,0],[2,0],[-1,0],[2,-1],[-1,2]],'03':[[0,0],[1,0],[-2,0],[1,-2],[-2,1]],'30':[[0,0],[-1,0],[2,0],[-1,2],[2,-1]],'12':[[0,0],[1,0],[-2,0],[1,-2],[-2,1]],'21':[[0,0],[-1,0],[2,0],[-1,2],[2,-1]],'32':[[0,0],[-2,0],[1,0],[-2,1],[1,-2]],'23':[[0,0],[2,0],[-1,0],[2,-1],[-1,2]]};
+const KICK_J={'01':[[0,0],[-1,0],[-1,-1],[0,2],[-1,2]],'10':[[0,0],[1,0],[1,1],[0,-2],[1,-2]],'03':[[0,0],[1,0],[1,-1],[0,2],[1,2]],'30':[[0,0],[-1,0],[-1,1],[0,-2],[-1,-2]],'12':[[0,0],[1,0],[1,1],[0,-2],[1,-2]],'21':[[0,0],[-1,0],[-1,-1],[0,2],[-1,2]],'32':[[0,0],[-1,0],[-1,1],[0,-2],[-1,-2]],'23':[[0,0],[1,0],[1,-1],[0,2],[1,2]]};
+const GRAVITY=[1,1,.8,.6,.5,.4,.3,.25,.2,.15,.1,.08,.06,.05,.04,.03,.02,.015,.01,.01,.008];
+const SC=[0,100,300,500,800],TSC=[0,200,400,600,1000];
+
+const board=document.getElementById('board'),bctx=board.getContext('2d');
+const holdC=document.getElementById('hold'),hctx=holdC.getContext('2d');
+const nextC=document.getElementById('next'),nctx=nextC.getContext('2d');
+const el=id=>document.getElementById(id);
+const ui={score:el('score'),lines:el('lines'),level:el('level'),time:el('time'),msg:el('msg'),bgm:el('bgmstate'),bgmname:el('bgmname'),
+  gaugefill:el('gaugefill'),gaugenext:el('gaugenext'),gaugepct:el('gaugepct'),
+  hiscore:el('hiscore'),hilevel:el('hilevel'),gpstate:el('gpstate')};
+
+let grid,bag,queue,piece,hold,canHold,score,lines,level,paused,over,anim,dropAnim=null;
+let overCells=[],overPiece=false,overCause=null;   // 出現位置がブロックと重なったネクストミノ（板の帯とNEXTパネルで点滅させる）
+let started=false;
+let dropT,lockT,resets,grounded,lastRot,elapsed,soundOn=true,actx=null,overT=0,fracY=0;
+const DROP_CELL_MS=18;   // ハードドロップの1マスあたりの落下時間（最高速）
+const DROP_MIN_MS=40;    // 1マスの落下でもこれだけは滑らかに
+const DROP_MAX_MS=120;   // 長い落下は短縮して手触りを壊さない
+let bgmOn=true,bgmPlaying=false,bgmGain=null,bgmBar=0,bgmNext=0,bgmTimer=null,armed=false;
+let bgmTrack=0,bgmPending=0;
+const HI_KEY='tetris_hi_qwen3';
+let hi=0,hiLevel=0,newHi=false;
+let sfxGain=null;
+let bgmFilter=null,bgmLfo=null,bgmVib=null,bgmComp=null,bgmDelay=null,bgmFb=null,bgmWet=null;
+
+function say(s){ui.msg.textContent=s||'';}
+function loadHi(){
+  try{
+    const raw=localStorage.getItem(HI_KEY);
+    if(!raw)return;
+    const o=JSON.parse(raw);
+    hi=o.score||0;hiLevel=o.level||0;
+  }catch(e){}
+}
+function saveHi(){
+  try{localStorage.setItem(HI_KEY,JSON.stringify({score:hi,level:hiLevel}));}catch(e){}
+}
+function hiUi(){
+  if(!ui.hiscore)return;
+  ui.hiscore.textContent=hi;
+  ui.hilevel.textContent='Lv '+hiLevel+(newHi?' ★更新中':'');
+}
+// デモ中はスコアを更新しない：直前プレイのスコアをそのまま表示する
+function addScore(n){if(demo)return;score+=n;}
+function hud(){
+  ui.score.textContent=score;ui.lines.textContent=lines;ui.level.textContent=level;ui.time.textContent=fmt(elapsed);
+  const p=level>=20?10:lines%10;
+  if(ui.gaugefill&&ui.gaugefill.style)ui.gaugefill.style.width=(p*10)+'%';
+  if(ui.gaugenext)ui.gaugenext.textContent=level>=20?'MAX':'next: '+(10-p)+' lines';
+  if(ui.gaugepct)ui.gaugepct.textContent=(p*10)+'%';
+  if(!demo&&score>hi){hi=score;hiLevel=level;newHi=true;saveHi();}   // 記録更新はリアルタイムで反映・保存
+  hiUi();
+}
+function fmt(ms){const s=Math.floor(ms/1000);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
+
+// デモ（アトラクトモード）中は音を鳴らさない：効果音もBGMも静音になる
+function muted(){return !soundOn||demo;}
+
+function sfxBus(){
+  actx=actx||new (window.AudioContext||window.webkitAudioContext)();
+  if(!sfxGain){
+    sfxGain=actx.createGain();sfxGain.gain.value=0.9;
+    try{
+      const comp=actx.createDynamicsCompressor();
+      comp.threshold.value=-14;comp.knee.value=20;comp.ratio.value=5;comp.attack.value=0.004;comp.release.value=0.18;
+      sfxGain.connect(comp);comp.connect(actx.destination);
+    }catch(e){sfxGain.connect(actx.destination);}
+  }
+  return sfxGain;
+}
+function beep(f,d,type,g,delay){
+  if(muted())return;
+  try{
+    const act=sfxBus(),o=actx.createOscillator(),v=actx.createGain(),t=actx.currentTime+(delay||0)/1000;
+    o.type=type||'square';o.frequency.value=f;
+    v.gain.setValueAtTime(g||0.04,t);
+    v.gain.exponentialRampToValueAtTime(0.0001,t+d);
+    o.connect(v);v.connect(act);o.start(t);o.stop(t+d);
+  }catch(e){}
+}
+// ベル音（FM）：モジュレータの深度が速く減衰して輝き、AMPがアタック→長い残響
+// 引数：f=周波数(Hz) / d=音価（秒） / delay=開始遅延（ミリ秒） / vol=音量 / ratio=FM比
+function chime(f,d,delay,vol,ratio){
+  if(muted())return;
+  d=Math.min(d,1.2);vol=Math.min(vol,0.3);   // 秒とミリ秒を取り違えると音が止まらなくなるので暴走を防ぐ
+  try{
+    const act=sfxBus(),t=actx.currentTime+(delay||0)/1000,r=ratio||3;
+    const car=actx.createOscillator(),mod=actx.createOscillator();
+    const mg=actx.createGain(),amp=actx.createGain(),lp=actx.createBiquadFilter();
+    car.type='sine';car.frequency.value=f;
+    mod.type='sine';mod.frequency.value=f*r;
+    mg.gain.setValueAtTime(Math.min(f*r*0.8,1400),t);   // 深度は音が高いほど大きくなる→1400Hzで上限（ブザー化を防ぐ）
+    mg.gain.exponentialRampToValueAtTime(1,t+d*0.45);
+    mod.connect(mg);mg.connect(car.frequency);
+    lp.type='lowpass';lp.frequency.value=6000;lp.Q.value=0.4;
+    amp.gain.setValueAtTime(0.0001,t);
+    amp.gain.exponentialRampToValueAtTime(vol,t+0.012);
+    amp.gain.exponentialRampToValueAtTime(0.0001,t+d);
+    car.connect(amp);amp.connect(lp);lp.connect(act);
+    car.start(t);car.stop(t+d+0.06);mod.start(t);mod.stop(t+d+0.06);
+  }catch(e){}
+}
+
+// 着弾音（FMパンチ）：低域の速いピッチ下降で「ドン」、非調和FMバーストで接触の「カ」。
+// ノイズバッファは使わない（オペレータはすべて sine）。ハードドロップは大きく、自然着地は小さく。
+function thud(vol,hard){
+  if(muted())return;
+  try{
+    const act=sfxBus(),t=actx.currentTime,base=hard?110:132;
+    const lp=actx.createBiquadFilter();
+    lp.type='lowpass';lp.frequency.value=hard?1500:1100;lp.Q.value=0.6;
+    lp.connect(act);
+    // 胴：carrier のピッチが速く下がり、mod depth も速く消える -> 打音
+    const car=actx.createOscillator(),mod=actx.createOscillator();
+    const mg=actx.createGain(),amp=actx.createGain();
+    car.type='sine';car.frequency.setValueAtTime(base,t);
+    car.frequency.exponentialRampToValueAtTime(base*0.5,t+0.10);
+    mod.type='sine';mod.frequency.value=base*2.5;
+    mg.gain.setValueAtTime(base*3.4,t);
+    mg.gain.exponentialRampToValueAtTime(1,t+0.05);
+    mod.connect(mg);mg.connect(car.frequency);
+    amp.gain.setValueAtTime(0.0001,t);
+    amp.gain.exponentialRampToValueAtTime(vol,t+0.005);
+    amp.gain.exponentialRampToValueAtTime(0.0001,t+(hard?0.18:0.13));
+    car.connect(amp);amp.connect(lp);
+    car.start(t);car.stop(t+0.22);mod.start(t);mod.stop(t+0.22);
+    // 接触の「カ」：非調和（ratio 7.3 / 11.2）の短いバースト
+    const ac=actx.createOscillator(),am=actx.createOscillator();
+    const ag=actx.createGain(),aamp=actx.createGain();
+    ac.type='sine';ac.frequency.value=base*7.3;
+    am.type='sine';am.frequency.value=base*11.2;
+    ag.gain.setValueAtTime(base*22,t);
+    ag.gain.exponentialRampToValueAtTime(1,t+0.012);
+    am.connect(ag);ag.connect(ac.frequency);
+    aamp.gain.setValueAtTime(0.0001,t);
+    aamp.gain.exponentialRampToValueAtTime(vol*0.45,t+0.002);
+    aamp.gain.exponentialRampToValueAtTime(0.0001,t+0.035);
+    ac.connect(aamp);aamp.connect(lp);
+    ac.start(t);ac.stop(t+0.05);am.start(t);am.stop(t+0.05);
+  }catch(e){}
+}
+
+// ---- BGM（曲集：FM音源で再生。レベル5ごとに曲が変わる）----
+// 小節 = [16分音符イベント..., 最後の要素がベース音]。イベント = [MIDI音高, 16分音符の長さ]（0=休符）
+// 各小節 = 16分音符 (meter*4) 個分（既定 2/4拍）。曲ごとに meter / bpm を指定できる。
+const BGM_BPM=140;
+const BGM_UNIT=60/(BGM_BPM*4);              // 16分音符1つ分の秒数（既定）
+const BGM_LEVEL_STEP=5;                     // 5レベルごとに曲が変わる
+function unitSeconds(tr){return 60/((tr.bpm||BGM_BPM)*4);}   // 曲ごとの16分音符1つ分の秒数
+function barSixteenths(tr){return (tr.meter||2)*4;}          // 曲ごとの小節の長さ（16分音符数）
+const BGM_TRACKS=[
+  {name:'Korobeiniki',mode:'m',style:'polka',lead:'bell',bars:[                // Jack Campin の abc（K:DMin）を Aマイナー（E5始まり）に移調
+    [[76,4],[71,2],[72,2],40],  // E5 B4 C5   | E
+    [[74,4],[72,2],[71,2],38],  // D5 C5 B4   | D
+    [[69,4],[69,2],[72,2],45],  // A4 A4 C5   | A
+    [[76,4],[74,2],[72,2],40],  // E5 D5 C5   | E
+    [[71,6],[72,2],47],         // B4(dq) C5  | B
+    [[74,4],[76,4],38],         // D5 E5      | D
+    [[72,4],[69,4],36],         // C5 A4      | C
+    [[69,4],[0,4],45],          // A4 +休符   | A
+    [[74,4],[74,2],[77,2],38],  // D5 D5 F5   | D
+    [[79,4],[77,2],[76,2],43],  // G5 F5 E5   | G
+    [[76,6],[72,2],40],         // E5(dq) C5  | E
+    [[76,4],[74,2],[72,2],40],  // E5 D5 C5   | E
+    [[71,4],[71,2],[72,2],47],  // B4 B4 C5   | B
+    [[74,4],[76,4],38],         // D5 E5      | D
+    [[72,4],[69,4],36],         // C5 A4      | C
+    [[69,4],[0,4],45]           // A4 +休符   | A
+  ]},
+  {name:'Kalinka',mode:'m',style:'polka',lead:'ep',bars:[                    // John Chambers abc（Kalinka, K:Dm, M:2/4）＋ folkinfo 版で音程パターン突合
+    // A段（“Kalinka, kalinka, kalinka moya”）
+    [[67,4],[64,2],[65,2],45],  // G4 E4 F4   | A7
+    [[67,4],[64,2],[65,2],45],  // G4 E4 F4   | A7
+    [[67,4],[65,2],[64,2],45],  // G4 F4 E4   | A7
+    [[62,4],[69,2],[69,2],38],  // D4 A4 A4   | Dm
+    [[67,3],[65,1],[64,2],[65,2],45], // G4. F4 E4 F4 (G>F EF) | A7
+    [[67,4],[64,2],[65,2],45],  // G4 E4 F4   | A7
+    [[67,4],[65,2],[64,2],45],  // G4 F4 E4   | A7
+    [[62,4],[69,4],38],         // D4 + pickup A4 | Dm
+    // B段（“Oh underneath the pine tree”）
+    [[69,2],[72,2],[71,2],[69,1],[67,1],41], // A4 C5 B4 A4 G4 (Ac BA/G/) | F
+    [[65,4],[60,4],41],         // F4 C4      | F
+    [[69,2],[72,2],[71,2],[69,1],[67,1],41], // Ac BA/G/ | F
+    [[65,4],[60,4],41],         // F4 C4      | F
+    [[70,4],[62,2],[64,2],46],  // Bb4 D4 E4  | Bb
+    [[67,2],[65,2],[64,2],[62,2],43], // G4 F4 E4 D4 | G7
+    [[60,4],[60,4],36],         // C4 C4      | C
+    [[60,4],[72,4],36],         // C4 C5      | C
+    [[69,2],[72,2],[67,2],[69,2],41], // A4 C5 G4 A4 | F
+    [[65,4],[60,4],41],         // F4 C4      | F
+    [[69,2],[72,2],[67,2],[69,2],41], // Ac GA  | F
+    [[65,4],[60,4],41],         // F4 C4      | F
+    [[70,4],[62,2],[64,2],46],  // Bb4 D4 E4  | Bb
+    [[67,2],[65,2],[64,2],[62,2],43], // GF ED  | G7
+    [[72,4],[71,4],36],         // C5 B4      | C
+    [[69,8],45]                 // A4         | A7
+  ]},
+  {name:'Katyusha',meter:2,bpm:120,key:[4,5,7,9,11,0,2],mode:'m',style:'march',lead:'reed',bars:[   // 出典: Paul Hardy's Session Tunebook 2026, K:Em, Q:1/4=120 (abcnotation pghardy/0302)
+    [[64,6],[65,2],40],                 // E4. F        | Em
+    [[67,6],[64,2],40],                 // G4. E        | Em
+    [[67,2],[67,2],[65,2],[64,2],40],   // G4 G4 F4 E4  | Em
+    [[65,4],[0,4],47],                  // F4 + (B,3)   | B7
+    [[65,6],[67,2],47],                 // F4. G        | B7
+    [[69,6],[65,2],45],                 // A4. F        | Am
+    [[69,2],[69,2],[67,2],[65,2],40],   // A4 A4 G4 F4  | Em
+    [[64,3],[65,1],[67,2],[69,2],40],   // E4.>F G4 A4  | Em
+    [[71,4],[76,4],40],                 // B4 E5        | Em
+    [[74,4],[76,2],[74,2],43],          // D5 E5 D5     | G/E7
+    [[72,2],[72,2],[71,2],[69,2],45],   // C5 C5 B4 A4  | Am
+    [[71,4],[64,4],40],                 // B4 E4        | Em
+    [[0,2],[72,4],[69,2],45],           // (z) C5 A4    | Am
+    [[71,6],[67,2],40],                 // B4. G        | Em
+    [[69,2],[69,2],[67,2],[65,2],47],   // A4 A4 G4 F4  | B7
+    [[64,8],40]                         // E4           | Em
+  ]},
+  {name:'Troika',meter:2,bpm:140,key:[2,4,5,7,9,11,0,1],mode:'m',style:'galop',lead:'brass',bars:[   // 出典: Colin Hume ABC.txt/1419, Traditional Russian, K:Dm, M:2/4, Q:1/4=140
+    // Intro
+    [[77,2],[76,2],[77,2],[76,2],38],   // F5 E5 F5 E5  | Dm
+    [[81,4],[69,4],38],                 // A5 A4        | -
+    [[77,4],[76,4],45],                 // F5 E5        | Am
+    [[74,8],38],                        // D5           | Dm
+    // A段
+    [[62,2],[69,4],[67,2],38],          // D4 A4 G4     | Dm
+    [[65,4],[64,4],38],                 // F4 E4        | -
+    [[62,4],[61,4],45],                 // D4 ^C4       | A7
+    [[62,4],[45,4],38],                 // D4 A3        | Dm
+    [[45,2],[69,4],[67,2],38],          // A3 A4 G4     | Dm
+    [[65,4],[64,4],38],                 // F4 E4        | -
+    [[62,4],[61,4],45],                 // D4 ^C4       | A7
+    [[62,8],38],                        // D4           | Dm
+    // B段
+    [[60,2],[72,4],[71,2],36],          // C4 C5 B4     | C
+    [[71,4],[69,4],41],                 // B4 A4        | F
+    [[0,2],[69,4],[67,2],38],           // (z) A4 G4    | Dm
+    [[67,4],[65,4],43],                 // G4 F4        | Gm
+    [[65,2],[64,2],[65,2],[67,2],43],   // F4 E4 F4 G4  | Gm
+    [[69,4],[45,4],45],                 // A4 A3        | A7
+    [[65,4],[64,4],38],                 // F4 E4        | Dm
+    [[62,8],38],                        // D4           | Dm
+    // C段
+    [[77,3],[76,1],[77,3],[76,1],38],   // F5.>E5 F5.>E5| Dm
+    [[77,4],[74,4],38],                 // F5 D5        | Dm
+    [[76,4],[76,4],45],                 // E5 E5        | A
+    [[76,4],[73,4],45],                 // E5 ^C5       | -
+    [[74,8],38],                        // D5           | Dm
+    [[76,2],[77,2],[76,2],[74,2],40],   // E5 F5 E5 D5  | E7
+    [[73,8],45],                        // ^C5          | A
+    [[69,8],45],                        // A4           | -
+    // D段
+    [[77,3],[76,1],[77,3],[76,1],38],   // F5.>E5 F5.>E5| Dm
+    [[77,4],[76,2],[77,2],38],          // F5 E5 F5     | -
+    [[79,4],[79,4],43],                 // G5 G5        | Gm
+    [[79,4],[77,2],[76,2],45],          // G5 F5 E5     | A7
+    [[77,4],[81,4],38],                 // F5 A5        | Dm
+    [[76,4],[81,4],45],                 // E5 A5        | A7
+    [[74,3],[76,1],[74,3],[73,1],38],   // D5.>E5 D5.^C5| Dm/A
+    [[74,8],38]                         // D5           | Dm
+  ]},
+  {name:'Vo Pole Beryoza',meter:2,bpm:108,key:[9,11,0,2,4,5,7],mode:'m',style:'lyric',lead:'flute',bars:[  // 出典: Musica Viva X:7955 "The birch tree", K:Am, M:2/4（打物なし・弦中心）
+    [[76,2],[76,2],[76,2],[76,2],45],   // e e e e      | Am
+    [[74,4],[72,2],[72,2],45],          // d2 c c       | Am
+    [[71,4],[69,4],47],                 // B2 A2        | E7
+    [[76,2],[76,2],[67,2],[76,2],45],   // e e g e      | Am
+    [[74,2],[74,2],[72,2],[72,2],38],   // d d c c      | Dm
+    [[71,4],[69,4],47],                 // B2 A2        | E7
+    [[71,6],[72,2],47],                 // B3 c         | E7
+    [[74,4],[72,2],[72,2],38],          // d2 c c       | Dm
+    [[71,4],[69,4],47],                 // B2 A2        | E7
+    [[71,6],[72,2],47],                 // B3 c         | E7
+    [[74,2],[76,2],[72,2],[72,2],38],   // d e c c      | Dm
+    [[71,4],[69,4],47]                  // B2 A2        | E7
+  ]},
+  {name:'Lezginka',meter:4,bpm:180,key:[2,4,5,7,9,11,0,1],mode:'m',style:'rock',lead:'brass',bars:[  // 出典: Voluntocracy / J.Chambers, K:Dm, M:4/4, Q:1/2=110（1小節=16個）
+    // Intro
+    [[69,4],[0,4],[69,4],[0,4],38],     // A2 z2 A2 z2   | Dm
+    [[71,2],[69,2],[67,2],[71,2],[69,2],[67,2],[65,2],[69,2],43], // BAGB AGFA  | Gm
+    [[67,2],[65,2],[64,2],[67,2],[65,2],[64,2],[62,2],[62,2],38], // GFEG FED2  | Dm
+    [[61,4],[64,4],[69,4],[45,4],45],   // ^C2 E2 A2 A,2 | A7
+    // A段
+    [[62,4],[65,4],[67,2],[65,2],[64,2],[62,2],38],     // D2F2 GF ED   | Dm
+    [[61,4],[64,4],[69,4],[0,4],45],    // ^C2 E2 A2 z2  | A7
+    [[64,4],[67,4],[67,2],[69,1],[67,1],[65,2],[64,2],43], // E2G2 (3GAG) FE -> 8分音符3つに均す | Gm
+    [[65,4],[62,4],[69,4],[45,4],38],   // F2 D2 A2 A,2  | Dm
+    // B段
+    [[67,4],[71,4],[74,4],[72,2],[71,2],43],            // G2 B2 d2 cB  | Gm
+    [[69,4],[69,4],[69,4],[0,4],38],    // A2 A2 A2 z2   | Dm
+    [[64,4],[67,4],[67,2],[69,1],[67,1],[65,2],[64,2],45], // E2G2 (3GAG) FE | A7
+    [[62,4],[65,4],[69,4],[0,4],38],    // D2 F2 A2 z2   | Dm
+    // C段
+    [[71,4],[0,4],[69,4],[0,4],43],     // B2 z2 A2 z2   | Gm
+    [[67,2],[65,2],[64,2],[67,2],[65,2],[64,2],[62,2],[62,2],38], // GFEG FED2 | Dm
+    [[71,4],[0,4],[69,4],[0,4],43],     // B2 z2 A2 z2   | Gm
+    [[67,2],[65,2],[64,2],[65,2],[62,4],[0,4],38],      // GFEF D2 z2   | Dm
+    [[67,4],[0,4],[65,4],[0,4],43],     // G2 z2 F2 z2   | Gm
+    [[64,2],[67,2],[65,2],[64,2],[65,2],[64,2],[62,2],[62,2],38], // EGFE FED2 | Dm
+    [[67,4],[0,4],[65,4],[0,4],43],     // G2 z2 F2 z2   | Gm
+    [[64,2],[67,2],[65,2],[64,2],[62,4],[0,2],[71,2],38] // EGFE D2 zB   | Dm
+  ]}
+];
+function bgmTrackForLevel(lv){return Math.floor((lv-1)/BGM_LEVEL_STEP)%BGM_TRACKS.length;}
+function hz(n){return 440*Math.pow(2,(n-69)/12);}
+function bgmUi(){
+  if(ui.bgm)ui.bgm.textContent=demo?'OFF（デモ）':(bgmOn?'ON':'OFF');
+  if(ui.bgmname)ui.bgmname.textContent=bgmPending!==bgmTrack?BGM_TRACKS[bgmPending].name+' (切替待ち)':BGM_TRACKS[bgmTrack].name;
+}
+
+// ---- FM音源（2オペレータ／OPL2風）----
+// preset = [mod ratio, mod index(=偏差/mod周波数), modEG[a,d,s,r], ampEG[a,d,s,r], amp peak]
+const FM={
+  presets:{
+    bell :[0.5,3.0,[0.004,0.14,0.22,0.05],[0.002,0.06,0.55,0.08],0.50],  // ベル（Tetris風の澄んだ音）
+    ep   :[1.0,1.2,[0.002,0.30,0.35,0.08],[0.001,0.10,0.60,0.10],0.45],  // Eピ（太く温かい）
+    brass:[1.0,4.5,[0.020,0.25,0.45,0.06],[0.004,0.08,0.60,0.06],0.45],  // ブラス（Adlib/OPL2らしい）
+    flute:[1.0,0.6,[0.030,0.20,0.55,0.06],[0.010,0.10,0.60,0.08],0.42],  // フルート（緩い立ち上がり）
+    reed :[1.5,2.2,[0.010,0.20,0.40,0.06],[0.004,0.10,0.55,0.06],0.40]   // リード（クラリネット風）
+  },
+  bass :[1.0,2.2,[0.006,0.20,0.30,0.06],[0.003,0.08,0.50,0.06],0.34],
+  pad  :[0.5,0.35,[0.120,0.30,0.60,0.12],[0.090,0.30,0.65,0.12],0.24],   // 和音（弦/パッド：ゆっくり鳴る）
+  pluck:[1.0,3.5,[0.002,0.12,0.12,0.04],[0.001,0.06,0.30,0.05],0.26],    // アルペジオ（ピチカート）
+  harm :[0.5,1.0,[0.010,0.20,0.40,0.06],[0.006,0.10,0.50,0.06],0.18],    // ハモリ（1オクターブ下の支え）
+  kick :[1.4,6.0,[0.001,0.06,0.10,0.02],[0.001,0.05,0.20,0.03],0.30],    // キック（FM＋音程降下＝thump）
+  snare:[1.4,8.0,[0.001,0.05,0.10,0.02],[0.001,0.04,0.15,0.02],0.20],    // スネア（高index＝ノイズ状）
+  hat  :[3.17,6.0,[0.001,0.03,0.05,0.01],[0.001,0.02,0.06,0.01],0.12]    // ハイハット（非整数比＝金属音）
+};
+let fmLead=FM.presets.bell;
+let fmLeadUser=false;                     // 選択で変えた場合のみ曲ごとの音色を上書き
+function leadPreset(tr){return fmLeadUser?fmLead:(FM.presets[tr.lead]||fmLead);}
+const FM_VIB=5.5;                       // ビブラート周波数（Hz）
+const FM_VIB_DEPTH=9;                   // Hz（約12〜15セント）
+function fmEG(p,t,dur,eg,peak){
+  const a=eg[0],d=eg[1],s=eg[2],r=eg[3];
+  const sus=Math.max(peak*s,1e-4);
+  const t1=t+a,t2=Math.max(t1,Math.min(t+a+d,t+dur-r));
+  p.setValueAtTime(1e-4,t);
+  p.linearRampToValueAtTime(peak,t1);                 // attack
+  p.exponentialRampToValueAtTime(sus,t2);              // decay → sustain
+  p.exponentialRampToValueAtTime(1e-4,t+dur);         // release
+}
+function fmVoice(n,t,dur,preset){
+  const f=hz(n),ratio=preset[0],idx=preset[1];
+  const car=actx.createOscillator(),mod=actx.createOscillator();
+  const mg=actx.createGain(),amp=actx.createGain();
+  car.type='sine';mod.type='sine';
+  car.frequency.value=f;
+  mod.frequency.value=f*ratio;
+  mod.connect(mg);mg.connect(car.frequency);          // 周波数変調（FM本体）
+  if(bgmVib)bgmVib.connect(car.frequency);            // ビブラート
+  car.connect(amp);amp.connect(bgmGain);
+  fmEG(mg.gain,t,dur,preset[2],idx*f*ratio);          // モジュレータEG＝音色の明るさ
+  fmEG(amp.gain,t,dur,preset[3],preset[4]);           // キャリアEG＝音量
+  mod.start(t);car.start(t);
+  mod.stop(t+dur+0.06);car.stop(t+dur+0.06);
+}
+
+// ---- 編曲レイヤー（旋律＋和音＋アルペジオ＋ハモリ＋打物）----
+// 音量は 0 にするとそのレイヤーだけ消せる（テスト・BGM OFF用）
+const BGM_MIX={mel:1.0,pad:0.26,arp:0.20,harm:0.16,drum:0.24};
+function chordOf(tr,bass){
+  if(!bass)return[];
+  const third=(tr.mode==='M')?4:3;            // 短調なら短3度、長調なら長3度
+  return [bass,bass+third,bass+7];            // 根音・3度・5度
+}
+function padVoice(n,t,dur,amp){
+  if(!bgmGain||!BGM_MIX.pad)return;
+  const g=actx.createGain(),lp=actx.createBiquadFilter();
+  lp.type='lowpass';lp.frequency.value=1500;lp.Q.value=0.6;
+  const pk=BGM_MIX.pad*amp;
+  g.gain.setValueAtTime(1e-4,t);
+  g.gain.linearRampToValueAtTime(pk,t+0.12);                 // 弦のゆっくりしたアーティキュレーション
+  g.gain.linearRampToValueAtTime(pk*0.7,t+dur*0.7);
+  g.gain.linearRampToValueAtTime(1e-4,t+dur);
+  lp.connect(g);g.connect(bgmGain);
+  [0,3].forEach(function(det){                               // 2音.detune＝コーラス風の揺れ
+    const o=actx.createOscillator();o.type='sine';o.frequency.value=hz(n)*(1+det/1000);
+    o.connect(lp);o.start(t);o.stop(t+dur+0.05);
+  });
+}
+function drumVoice(n,t,dur,preset,amp,drop){
+  if(!bgmGain||!BGM_MIX.drum)return;
+  const f=hz(n),ratio=preset[0],idx=preset[1];
+  const car=actx.createOscillator(),mod=actx.createOscillator();
+  const mg=actx.createGain(),am=actx.createGain();
+  car.type='sine';mod.type='sine';
+  car.frequency.setValueAtTime(f,t);
+  if(drop!==1)car.frequency.exponentialRampToValueAtTime(f*drop,t+Math.min(0.12,dur));
+  mod.frequency.value=f*ratio;
+  mod.connect(mg);mg.connect(car.frequency);
+  car.connect(am);am.connect(bgmGain);
+  fmEG(mg.gain,t,dur,preset[2],idx*f*ratio);
+  fmEG(am.gain,t,dur,preset[3],preset[4]*amp);
+  mod.start(t);car.start(t);
+  mod.stop(t+dur+0.06);car.stop(t+dur+0.06);
+}
+function drumsForBar(t,len,u,span,style){
+  if(!BGM_MIX.drum||style==='none'||style==='lyric')return;
+  const beats=span/4;
+  for(let b=0;b<beats;b++){
+    const tt=t+b*4*u;
+    const strong=(style==='rock')?(b%2===0):(b===0);          // 4/4は1・3拍、他は1拍
+    if(strong)drumVoice(33,tt,0.16,FM.kick,BGM_MIX.drum,0.4);   // A1（55Hz）から音程が下げて thump
+    else drumVoice(60,tt,0.12,FM.snare,BGM_MIX.drum*0.75,1);
+    drumVoice(84,tt,0.05,FM.hat,BGM_MIX.drum*0.35,1);
+    if(style==='galop')drumVoice(84,tt+2*u,0.05,FM.hat,BGM_MIX.drum*0.28,1);   // 騎走風の裏拍
+  }
+}
+function arrangeBar(tr,bar,t,u,span){
+  const bass=bar[bar.length-1],chord=chordOf(tr,bass),style=tr.style||'polka';
+  const len=bar.slice(0,bar.length-1).reduce((a,e)=>a+e[1],0);
+  if(chord.length)chord.forEach(function(n,i){padVoice(n,t,len*u,BGM_MIX.pad*(i===0?1:0.85));});
+  if(BGM_MIX.arp&&chord.length&&style!=='lyric'){
+    const pat=[0,2,1,2];                                      // 根音→5度→3度→5度 の8分アルペジオ
+    for(let k=0;k<Math.floor(len/4);k++){
+      const n=chord[pat[k%4]];
+      if(n)fmVoice(n+12,t+k*4*u,3*u,FM.pluck);                 // パッドより1オクターブ上（混濁回避）
+    }
+  }
+  if(BGM_MIX.harm){
+    let p=0;
+    for(let i=0;i<bar.length-1;i++){
+      const ev=bar[i];
+      if(ev[0]&&ev[1]>=4)fmVoice(ev[0]-12,t+p,Math.min(ev[1],4)*u,FM.harm);   // 長い音だけ1オクターブ下で支える
+      p+=ev[1]*u;
+    }
+  }
+  drumsForBar(t,len,u,span,style);
+}
+function bgmTick(){
+  if(!bgmPlaying||!bgmGain||!actx)return;
+  const look=actx.currentTime+0.5;                // 0.5秒先まで予約
+  while(bgmNext<look){
+    const tr=BGM_TRACKS[bgmTrack],bar=tr.bars[bgmBar],t=bgmNext,bass=bar[bar.length-1];
+    const u=unitSeconds(tr),span=barSixteenths(tr);   // 曲ごとの拍・テンポ
+    let p=0,len=0;
+    for(let i=0;i<bar.length-1;i++){
+      const ev=bar[i];
+      len+=ev[1];
+      if(ev[0]&&BGM_MIX.mel)fmVoice(ev[0],t+p,ev[1]*u,leadPreset(tr));
+      p+=ev[1]*u;
+    }
+    if(bass){
+      fmVoice(bass,t,Math.min(len,4)*u,FM.bass);
+      if(len>=span)fmVoice(bass,t+4*u,4*u,FM.bass);   // 小節が2拍分以上なら裏拍も鳴らす
+    }
+    arrangeBar(tr,bar,t,u,span);                      // 和音・アルペジオ・ハモリ・打物
+    bgmBar++;
+    bgmNext+=len*u;
+    if(bgmBar>=tr.bars.length)bgmBar=0;
+    if(bgmPending!==bgmTrack){                    // 小節の区切り（最大1小節）で曲を切り替える
+      bgmTrack=bgmPending;bgmBar=0;bgmUi();
+    }
+  }
+}
+function bgmStart(){
+  if(muted()||!bgmOn||bgmPlaying||!armed)return;   // デモ中はBGMも鳴らさない
+  try{
+    actx=actx||new (window.AudioContext||window.webkitAudioContext)();
+    if(actx.state==='suspended')actx.resume();
+    bgmGain=actx.createGain();bgmGain.gain.value=0.42;
+    bgmFilter=actx.createBiquadFilter();bgmFilter.type='lowpass';bgmFilter.frequency.value=5200;bgmFilter.Q.value=0.6;
+    if(actx.createDynamicsCompressor){                 // 層が増えるので歪みを抑える
+      bgmComp=actx.createDynamicsCompressor();
+      bgmComp.threshold.value=-16;bgmComp.knee.value=18;bgmComp.ratio.value=4;
+      bgmComp.attack.value=0.003;bgmComp.release.value=0.20;
+      bgmGain.connect(bgmFilter);bgmFilter.connect(bgmComp);bgmComp.connect(actx.destination);
+    }else{
+      bgmGain.connect(bgmFilter);bgmFilter.connect(actx.destination);
+    }
+    if(actx.createDelay){                             // 簡易リバーブ（フィードバックディレイ）
+      bgmDelay=actx.createDelay(1.0);bgmDelay.delayTime.value=0.24;
+      bgmFb=actx.createGain();bgmFb.gain.value=0.30;
+      bgmWet=actx.createGain();bgmWet.gain.value=0.22;
+      const dlp=actx.createBiquadFilter();dlp.type='lowpass';dlp.frequency.value=2800;dlp.Q.value=0.5;
+      bgmFilter.connect(bgmDelay);bgmDelay.connect(dlp);dlp.connect(bgmWet);bgmWet.connect(actx.destination);
+      bgmDelay.connect(bgmFb);bgmFb.connect(bgmDelay);
+    }
+    bgmLfo=actx.createOscillator();bgmLfo.type='sine';bgmLfo.frequency.value=FM_VIB;
+    bgmVib=actx.createGain();bgmVib.gain.value=FM_VIB_DEPTH;bgmLfo.connect(bgmVib);bgmLfo.start();
+    bgmPlaying=true;bgmTrack=bgmTrackForLevel(level);bgmPending=bgmTrack;bgmBar=0;bgmNext=actx.currentTime+0.15;
+    bgmTimer=setInterval(bgmTick,60);bgmTick();
+  }catch(e){}
+  bgmUi();
+}
+function bgmStop(){
+  if(!bgmPlaying)return;
+  bgmPlaying=false;
+  if(bgmTimer){clearInterval(bgmTimer);bgmTimer=null;}
+  if(bgmLfo){try{bgmLfo.stop();}catch(e){}bgmLfo=null;bgmVib=null;}
+  if(bgmGain){bgmGain.disconnect();bgmGain=null;}
+  if(bgmFilter){bgmFilter.disconnect();bgmFilter=null;}
+  if(bgmComp){bgmComp.disconnect();bgmComp=null;}
+  if(bgmDelay){bgmDelay.disconnect();bgmDelay=null;bgmFb=null;bgmWet=null;}
+  bgmUi();
+}
+function armAudio(){
+  if(armed)return;
+  armed=true;
+  try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();}catch(e){return;}
+  bgmUi();if(started)bgmStart();
+}
+
+// ---- 揃ったときのエフェクト ----
+const FX={parts:[],glow:[],rings:[],flash:0,shake:0};
+function spark(x,y,t,vx,vy,life,s){
+  if(FX.parts.length>420)return;
+  FX.parts.push({x:x,y:y,vx:vx,vy:vy,life:life,t:t,s:s});
+}
+function ring(x,y,t,life,r0,r1){
+  if(FX.rings.length>40)return;
+  FX.rings.push({x:x,y:y,t:t,life:life,max:life,r0:r0,r1:r1});
+}
+function burst(rows){
+  const n=rows.length;
+  for(const r of rows)for(let c=0;c<COLS;c++){
+    const t=grid[r*COLS+c];
+    if(!t)continue;
+    const cx=c*CELL+CELL/2,cy=r*CELL+CELL/2;
+    for(let k=0;k<(n>=4?3:2);k++){
+      const a=Math.random()*Math.PI*2,sp=(0.8+Math.random()*2.4)*CELL/1000;
+      spark(cx,cy,t,Math.cos(a)*sp,Math.sin(a)*sp-CELL/1000,0.55+Math.random()*0.45,CELL*(0.14+Math.random()*0.22));
+    }
+  }
+  FX.flash=n>=4?1:0.35+0.13*n;
+  FX.shake=n>=4?16:4+2.5*n;
+}
+function fanfare(n,tsp){
+  if(muted())return;
+  const root=tsp?440:523.25;                       // Cメジャーのアーペジオ（TスピンはAから）
+  const arp=[1,1.25,1.5,2,2.5,3];                  // C-E-G-C-E-G（明るい長三和音）
+  const cnt=Math.min(n+2,arp.length);              // 1ライン=3音、4ライン=6音
+  for(let i=0;i<cnt;i++)chime(root*arp[i],0.42,i*70,0.22,3);
+  chime(root/2,0.6,0,0.16,2);                      // 低域の支え（1オクターブ下）
+  if(n>=4)for(let i=0;i<cnt;i++)chime(root*arp[i]*2,0.34,i*70+140,0.14,4);   // テトリスのキラキラ（音価0.34秒・音量0.14・遅延i*70+140ms）
+}
+function dust(d){
+  if(!piece)return;
+  const st=STATES[piece.t][piece.s];
+  const landed=collides(piece.t,piece.s,piece.x,piece.y+1);
+  const n=Math.min(4,2+Math.floor((d||0)/4));            // 落下距離に応じて火花が増える
+  let cx=0,cy=0;
+  for(const [px,py] of st){
+    const gx=piece.x+px,gy=piece.y+py;
+    cx+=gx;cy+=gy;
+    if(!landed&&gy<ROWS-1)continue;
+    for(let k=0;k<n;k++){
+      const a=Math.PI+(Math.random()-0.5)*2.4,sp=(0.5+Math.random()*1.7)*CELL/1000;
+      spark(gx*CELL+CELL/2,gy*CELL+CELL/2,piece.t,Math.cos(a)*sp,-Math.abs(Math.sin(a))*sp*1.3,0.45+Math.random()*0.4,CELL*(0.15+Math.random()*0.22));
+    }
+  }
+  const mx=cx/st.length*CELL+CELL/2,my=cy/st.length*CELL+CELL/2;
+  // 着弾点から衝撃波の輪が広がる（板全体は震えない）
+  ring(mx,my,piece.t,1,CELL*0.4,CELL*(1.5+Math.min(2.2,(d||0)*0.2)));
+  for(let k=0;k<3;k++){                                   // 中心の白い火花
+    const a=Math.PI*2*k/3+0.5,sp=(1.2+Math.random()*1.2)*CELL/1000;
+    spark(mx,my,'',Math.cos(a)*sp,Math.sin(a)*sp-CELL/1500,0.5,CELL*0.2);
+  }
+  // 落ちたブロックを光らせる（落下距離が長いほど強く、約0.45秒で消える）
+  const g=Math.min(1,0.45+(d||0)*0.07);
+  for(const [px,py] of st)FX.glow.push({x:piece.x+px,y:piece.y+py,t:piece.t,life:g,max:g});
+}
+function stepFx(dt){
+  FX.flash=Math.max(0,FX.flash-dt/450);
+  FX.shake=Math.max(0,FX.shake-dt/110);
+  for(let i=FX.glow.length-1;i>=0;i--){
+    FX.glow[i].life-=dt/450;
+    if(FX.glow[i].life<=0)FX.glow.splice(i,1);
+  }
+  for(let i=FX.rings.length-1;i>=0;i--){
+    FX.rings[i].life-=dt/420;
+    if(FX.rings[i].life<=0)FX.rings.splice(i,1);
+  }
+  const g=CELL/1000*3.4;
+  for(let i=FX.parts.length-1;i>=0;i--){
+    const p=FX.parts[i];
+    p.life-=dt/700;
+    if(p.life<=0){FX.parts.splice(i,1);continue;}
+    p.vy+=g*dt/1000;
+    p.x+=p.vx*dt;p.y+=p.vy*dt;
+    if(p.y>ROWS*CELL+40)FX.parts.splice(i,1);
+  }
+}
+function gameOver(){
+  if(over)return;
+  savePlay();   // 区切りのプレイを記録に残す（デモ中の手は記録しない）
+  over=true;overT=0;
+  say(newHi?'ハイスコア更新！ '+hi+'点 / Lv '+hiLevel:'ゲームオーバー — START で再開始');
+  bgmStop();
+  FX.flash=Math.max(FX.flash,.5);
+  FX.shake=Math.max(FX.shake,10);
+  [440,330,220,165].forEach(function(f,i){beep(f,.35,'sawtooth',.05,i*140);});
+  rumble(400,0.9,0.7);
+}
+function popBag(){
+  if(!bag.length){bag=TYPES.slice();for(let i=bag.length-1;i>0;i--){const j=(Math.random()*(i+1))|0,tmp=bag[i];bag[i]=bag[j];bag[j]=tmp;}}
+  return bag.pop();
+}
+function collides(t,s,x,y){
+  for(const [cx,cy] of STATES[t][s]){
+    const gx=x+cx,gy=y+cy;
+    if(gx<0||gx>=COLS||gy>=ROWS)return true;
+    if(gy>=0&&grid[gy*COLS+gx])return true;
+  }
+  return false;
+}
+// 指定した形が既存ブロックと重なっているマス＝ゲームオーバーの原因になったマスを列挙する
+function hitCells(t,s,x,y){
+  const out=[];
+  for(const [cx,cy] of STATES[t][s]){
+    const gx=x+cx,gy=y+cy;
+    if(gx<0||gx>=COLS||gy<0||gy>=ROWS)continue;   // 出現行（板の20行より上）のマスは板のマスではない（重なりとして記録しない）
+    if(gy%1)continue;
+    if(grid[gy*COLS+gx])out.push(gy*COLS+gx);
+  }
+  return out;
+}
+// 出現行（板の20行より上＝row 20）：ミノの一番上のセルをこの行に置く（ぷよぷよテトリスと同じ出現位置）
+function stripTop(t,s){
+  let mny=Infinity;for(const [,cy] of STATES[t][s])mny=Math.min(mny,cy);
+  return SPAWN_ROW-mny;
+}
+function clampTop(t,s,x,y){ return Math.max(y,stripTop(t,s)); }
+// 原因ブロック（プレイ画面の一番上にはみ出した次のブロック）は0.5秒経ってから自色⇔白で点滅する
+const OVER_BLINK_MS=250;             // 点滅の半周期
+function causeBlink(){return over&&overT>=OVER_WHITE_MS;}
+function causeWhite(){return causeBlink()&&Math.floor((overT-OVER_WHITE_MS)/OVER_BLINK_MS)%2===0;}   // 白の位相
+function causeColor(t){return causeWhite()?'#fff':COLORS[t];}
+function cellColor(i){return COLORS[grid[i]];}   // 板のブロック（一つ手前）は自色のまま
+// 原因ブロック（出現位置が塞がれたネクストミノ）：板には置かれず、出現行（板の20行より上）にそのまま表示される。
+// 点滅するのは出現行内の部分だけで、板内に重なる分は自色のまま。
+function drawCause(c,a){
+  if(!over||!overCause)return;
+  const p=overCause;
+  for(const [ox,oy] of STATES[p.t][p.s]){
+    const gx=(p.x+ox)*CELL,gy=(p.y+oy)*CELL;
+    cell(c,gx,gy,CELL,COLORS[p.t],a);
+    if(gy<0){                                   // 帯内の上半分
+      const h=-gy;
+      if(h>1){
+        c.globalAlpha=a;
+        c.fillStyle=causeWhite()?'#fff':COLORS[p.t];
+        rr(c,gx+1,gy+1,CELL-2,h-1,Math.min(4,CELL/4));c.fill();
+      }
+    }
+  }
+}
+function ground(){
+  const g=collides(piece.t,piece.s,piece.x,piece.y+1);
+  if(g&&!grounded&&!over)thud(0.15,false);   // 地面（またはスタック）に触れた瞬間の着弾音
+  grounded=g;
+}
+function resetLock(){if(grounded&&resets<MAXRESET){resets++;lockT=0;}}
+function move(dx,dy){
+  if(!piece||over||paused||anim||dropAnim)return false;
+  if(collides(piece.t,piece.s,piece.x+dx,piece.y+dy))return false;
+  piece.x+=dx;piece.y+=dy;ground();resetLock();
+  return true;
+}
+function rotate(dir){
+  if(!piece||over||paused||anim||dropAnim)return false;
+  const from=piece.s,to=(from+(dir>0?1:3))%4;
+  const tbl=piece.t==='O'?[[0,0]]:(piece.t==='I'?KICK_I:KICK_J)[from+''+to];
+  for(const [kx,ky] of tbl){
+    if(!collides(piece.t,to,piece.x+kx,piece.y+ky)){
+      piece.s=to;piece.x+=kx;piece.y+=ky;lastRot=true;ground();resetLock();
+      beep(620,.05,'square',.03);
+      return true;
+    }
+  }
+  return false;
+}
+function hardDrop(){
+  if(!piece||over||paused||anim||dropAnim)return;
+  let d=0;
+  while(!collides(piece.t,piece.s,piece.x,piece.y+1)){piece.y++;d++;}
+  fracY=0;
+  if(!d){landDrop(0);return;}   // すでに接地していれば即着弾
+  // 最高速（1マス約18ms）で滑らかに落下：サブセルで補間し、着弾するまで入力は受け付けない
+  dropAnim={t:0,dur:Math.max(DROP_MIN_MS,Math.min(DROP_MAX_MS,d*DROP_CELL_MS)),from:piece.y-d,to:piece.y,d:d};
+}
+function landDrop(d){
+  fracY=0;
+  addScore(2*d);thud(Math.min(0.26,0.14+d*0.012),true);dust(d);   // 落下距離に応じて強くなる着弾音（デモ中は加算なし）
+  rumble(120,0.4,0.25);
+  lock();
+}
+function stepDrop(dt){
+  if(!dropAnim)return;
+  dropAnim.t+=dt;
+  if(dropAnim.t>=dropAnim.dur){const a=dropAnim;dropAnim=null;landDrop(a.d);}
+}
+function finishDrop(){ if(dropAnim)stepDrop(DROP_MAX_MS+1); }   // 即着弾（テスト・即時完了用）
+function dropY(){ return dropAnim?dropAnim.from+(dropAnim.to-dropAnim.from)*(dropAnim.t/dropAnim.dur):piece.y+fracY; }
+function corners(){
+  let n=0;
+  for(const [cx,cy] of [[0,0],[2,0],[0,2],[2,2]]){
+    const gx=piece.x+cx,gy=piece.y+cy;
+    if(gx<0||gx>=COLS||gy<0||gy>=ROWS||grid[gy*COLS+gx])n++;
+  }
+  return n;
+}
+function spawnSlot(t){ return {x:Math.floor((COLS-BOX[t])/2),y:SPAWN_ROW}; }   // ネクストミノの出現位置
+function setPiece(t){
+  const p=spawnSlot(t);
+  const y=stripTop(t,0);                        // ミノの一番上のセルを出現行（板の20行より上＝row 20）に置く
+  const hits=hitCells(t,0,p.x,y);               // ゲームオーバー条件＝ネクストミノの出現位置とブロックの重複
+  if(hits.length){
+    // 板に重ねるのではなく、出現行（上部1ブロック）にそのまま表示する。0.5秒経ってから自色⇔白で点滅
+    overCause={t:t,s:0,x:p.x,y};
+    overCells=hits;overPiece=true;piece=null;
+    gameOver();return;   // 配置不可（トップアウト）では着弾音を鳴らさない
+  }
+  piece={t:t,s:0,x:p.x,y};
+  lastRot=false;resets=0;lockT=0;dropT=0;fracY=0;
+  ground();
+  if(demo){   // 一手ごとに手変わり（単調にならないため）
+    demoOrder=Math.random()<0.7?0:1;
+    // 着地前に何セルか落してからハードドロップする（回転→即ドロップばかりにならない）
+    demoSoft=Math.random()<0.5?3+Math.floor(Math.random()*4):0;
+    demoWait=Math.random()<0.35?2+Math.floor(Math.random()*4):0;
+    demoBeat=Math.random()<0.12?1+Math.floor(Math.random()*2):0;
+    demoTarget=null;
+  }
+}
+function spawnNext(){
+  if(demo&&demoRun&&demoRun[demoRunIdx]){          // リプレイ中：記録されたブロックを再現する
+    const e=demoRun[demoRunIdx];
+    demoSeqIdx=0;
+    setPiece(e.t);
+    return;
+  }
+  const t=queue[0],p=spawnSlot(t);
+  if(hitCells(t,0,p.x,stripTop(t,0)).length){ setPiece(t); return; }   // 塞がれたネクストミノはqueueに残す（NEXTパネルで点滅させる）
+  queue.shift();queue.push(popBag());setPiece(t);
+}
+function holdPiece(){
+  if(!canHold||!piece||over||paused||anim||dropAnim)return;
+  const cur=piece.t,sw=hold;hold=cur;canHold=false;
+  if(sw)setPiece(sw);else spawnNext();
+  beep(500,.06,'triangle',.04);
+}
+function lock(){
+  if(!demo)recEnd();   // プレイヤーの手を記録する（デモ中の手は記録しない）
+  else if(demoRun)demoRunIdx++;   // リプレイ：このブロックの記録は使い切った
+  if(!piece)return;
+  const cells=STATES[piece.t][piece.s];
+  const t=piece.t,s=piece.s,px=piece.x,py=piece.y;
+  let out=false;   // 板の20行より上（出現行＝row 20）でロック＝ぷよぷよテトリスと同じロックアウト
+  for(const [cx,cy] of cells){
+    const gx=piece.x+cx,gy=piece.y+cy;
+    if(gy<0){out=true;continue;}   // 出現行は板のマスとして記録しない
+    if(gx>=0&&gx<COLS&&gy<ROWS)grid[gy*COLS+gx]=piece.t;
+  }
+  const tsp=piece.t==='T'&&lastRot&&corners()>=3;
+  const full=[];
+  for(let r=0;r<ROWS;r++){let f=true;for(let c=0;c<COLS;c++){if(!grid[r*COLS+c]){f=false;break;}}if(f)full.push(r);}
+  canHold=true;lastRot=false;fracY=0;
+  if(out){   // ぷよぷよテトリスと同じルール：ミノが板の20行より上（出現行）でロックしたらゲームオーバー
+    // 板に重ねず、上部0.5ブロックの帯にはみ出したまま残す（0.5秒後に自色⇔白で点滅）
+    overCause={t:t,s:s,x:px,y:py};   // 板には置かず、出現行（板の20行より上＝row 20）にそのまま表示
+    overCells=[];overPiece=true;piece=null;gameOver();
+  }else{
+    piece=null;
+    if(full.length){anim={rows:full,t:0,tsp:tsp};burst(full);fanfare(full.length,tsp);}
+    else{if(tsp){addScore(200*level);say('Tスピン!');}spawnNext();}
+  }
+  hud();
+}
+function finishAnim(){
+  const n=anim.rows.length;
+  addScore((anim.tsp?TSC[n]:SC[n])*level);
+  lines+=n;
+  const prevLevel=level;
+  level=Math.min(20,Math.floor(lines/10)+1);
+  let bgmMsg='';
+  if(level!==prevLevel){
+    const t=bgmTrackForLevel(level);
+    if(t!==bgmTrack){bgmPending=t;bgmUi();bgmMsg=' / BGM: '+BGM_TRACKS[t].name;}
+  }
+  for(const r of anim.rows)for(let c=0;c<COLS;c++)grid[r*COLS+c]=null;
+  const ng=new Array(COLS*ROWS).fill(null);
+  let w=ROWS-1;
+  for(let r=ROWS-1;r>=0;r--){
+    if(anim.rows.indexOf(r)>=0)continue;
+    for(let c=0;c<COLS;c++)ng[w*COLS+c]=grid[r*COLS+c];
+    w--;
+  }
+  grid=ng;
+  let empty=true;for(let i=0;i<grid.length;i++)if(grid[i]){empty=false;break;}
+  if(empty)addScore(3000);
+  say((n===4?'TETRIS!':(anim.tsp?'Tスピン '+n+'ライン!':n+'ラインクリア'))+bgmMsg);
+  rumble(120+60*n,Math.min(1,0.3+0.15*n),0.3);   // 消去行数で強くなる振動
+  anim=null;spawnNext();hud();
+}
+function reset(){
+  grid=new Array(COLS*ROWS).fill(null);
+  bag=[];queue=[];for(let i=0;i<5;i++)queue.push(popBag());
+  hold=null;canHold=true;score=0;lines=0;level=1;newHi=false;
+  paused=false;over=false;overT=0;anim=null;dropAnim=null;dropT=0;lockT=0;resets=0;lastRot=false;elapsed=0;fracY=0;
+  overCells=[];overPiece=false;overCause=null;
+  dasDir=0;dasT=0;arrT=0;softT=0;
+  FX.parts.length=0;FX.glow.length=0;FX.rings.length=0;FX.flash=0;FX.shake=0;
+  if(armed){bgmStop();bgmStart();}   // ゲーム開始時は曲を最初（小節0）から鳴らす
+  say('');if(started)spawnNext();hud();
+}
+function rr(c,x,y,w,h,r){
+  c.beginPath();
+  c.moveTo(x+r,y);
+  c.arcTo(x+w,y,x+w,y+h,r);
+  c.arcTo(x+w,y+h,x,y+h,r);
+  c.arcTo(x,y+h,x,y,r);
+  c.arcTo(x,y,x+w,y,r);
+  c.closePath();
+}
+function cell(c,px,py,s,color,a){
+  const r=Math.min(4,s/4);
+  c.globalAlpha=a===undefined?1:a;
+  c.fillStyle=color;
+  rr(c,px+1,py+1,s-2,s-2,r);c.fill();
+  c.globalAlpha=(a===undefined?1:a)*.35;
+  c.fillStyle='#fff';
+  rr(c,px+3,py+3,s-6,Math.max(2,s/6),1);c.fill();
+  c.globalAlpha=1;
+}
+function mini(c,t,cx,cy,s,a,color){
+  if(!t)return;
+  const col=color||COLORS[t];
+  const cs=STATES[t][0];
+  let mnx=9,mxx=-1,mny=9,mxy=-1;
+  for(const [x,y] of cs){mnx=Math.min(mnx,x);mxx=Math.max(mxx,x);mny=Math.min(mny,y);mxy=Math.max(mxy,y);}
+  const w=(mxx-mnx+1)*s,h=(mxy-mny+1)*s;
+  for(const [x,y] of cs)cell(c,cx-w/2+(x-mnx)*s,cy-h/2+(y-mny)*s,s,col,a);
+}
+// NEXTパネル：出現位置が塞がれたネクストミノ（queue[0]）は0.5秒後に自色⇔白で点滅する
+function drawNext(){
+  for(let i=0;i<5;i++){
+    const t=queue[i];
+    const blink=over&&i===0&&overCause&&t===overCause.t;
+    mini(nctx,t,nextC.width/2,22+i*40,14,i===0?1:.7,blink?causeColor(t):COLORS[t]);
+  }
+}
+function drawOver(){
+  if(!over)return;
+  const W=board.width,H=board.height,cx=W/2;
+  const a=Math.min(1,overT/300);
+  bctx.save();
+  bctx.globalAlpha=a*.7;
+  bctx.fillStyle='#05070f';
+  bctx.fillRect(0,0,W,H);
+  bctx.globalAlpha=1;
+  bctx.translate(0,TOP);
+  const cy=ROWS*CELL/2;
+  if(causeBlink()&&overPiece&&piece){   // 0.5秒経ってから帯内の上半分が自色⇔白で交互に点滅
+    const pulse=0.6+0.4*Math.abs(Math.sin(overT/240));
+    drawCause(bctx,pulse);
+  }
+  const pw=W-34,ph=190,px=cx-pw/2,py=cy-ph/2;
+  bctx.globalAlpha=a;
+  rr(bctx,px,py,pw,ph,12);
+  bctx.fillStyle='rgba(23,27,44,.94)';
+  bctx.fill();
+  bctx.strokeStyle='rgba(255,93,93,.38)';
+  bctx.lineWidth=1;
+  rr(bctx,px,py,pw,ph,12);
+  bctx.stroke();
+  bctx.textAlign='center';
+  bctx.textBaseline='alphabetic';
+  bctx.font='700 21px system-ui,Meiryo,sans-serif';
+  bctx.fillStyle='#ff5d5d';
+  bctx.fillText('GAME OVER',cx,py+42);
+  bctx.font='12px system-ui,Meiryo,sans-serif';
+  bctx.fillStyle='#8b93a8';
+  bctx.fillText('SCORE  '+score,cx,py+72);
+  bctx.fillText('LINES  '+lines+'   LEVEL  '+level,cx,py+92);
+  bctx.fillText('TIME  '+fmt(elapsed),cx,py+112);
+  bctx.fillStyle='#ffd05e';
+  bctx.fillText('HI  '+hi+'   Lv '+hiLevel,cx,py+132);
+  if(Math.floor(overT/500)%2===0){
+    bctx.fillStyle='#dfe5f2';
+    bctx.fillText('START ボタンで再開始',cx,py+158);
+  }
+  bctx.fillStyle='#8b93a8';
+  bctx.fillText('30秒無操作でデモ自動開始',cx,py+176);
+  bctx.globalAlpha=1;
+  bctx.restore();
+}
+function drawStart(){
+  const W=board.width,H=board.height,cx=W/2;
+  bctx.save();
+  bctx.globalAlpha=.72;
+  bctx.fillStyle='#05070f';
+  bctx.fillRect(0,0,W,H);
+  bctx.translate(0,TOP);
+  const cy=ROWS*CELL/2;
+  bctx.textAlign='center';
+  bctx.textBaseline='alphabetic';
+  bctx.font='700 22px system-ui,Meiryo,sans-serif';
+  bctx.fillStyle='#dfe5f2';
+  bctx.fillText('TETRIS',cx,cy-34);
+  bctx.font='12px system-ui,Meiryo,sans-serif';
+  bctx.fillStyle='#8b93a8';
+  bctx.fillText('START ボタンを押して開始',cx,cy+4);
+  bctx.fillText('(Enter / Space でも可)',cx,cy+24);
+  bctx.fillStyle='#ffd05e';
+  bctx.fillText('ハイスコア '+hi+' / Lv '+hiLevel,cx,cy+44);
+  bctx.fillStyle='#8b93a8';
+  bctx.fillText('30秒無操作でデモ自動開始',cx,cy+64);
+  bctx.globalAlpha=1;
+  bctx.restore();
+}
+function draw(){
+  bctx.save();
+  bctx.fillStyle='#0b0e18';
+  bctx.fillRect(0,0,board.width,board.height);          // 上余白（TOP＝はみ出しブロック用）も含めて背景
+  if(FX.shake>0.1)bctx.translate((Math.random()-0.5)*FX.shake,(Math.random()-0.5)*FX.shake);
+  bctx.translate(0,TOP);                                // 板を余白分だけ下にずらす（上のはみ出しは負のy）
+  bctx.strokeStyle='rgba(255,255,255,.045)';bctx.lineWidth=1;
+  bctx.beginPath();
+  for(let c=0;c<=COLS;c++){bctx.moveTo(c*CELL+.5,0);bctx.lineTo(c*CELL+.5,ROWS*CELL);}
+  for(let r=0;r<=ROWS;r++){bctx.moveTo(0,r*CELL+.5);bctx.lineTo(COLS*CELL,r*CELL+.5);}
+  bctx.stroke();
+  const p=anim?anim.t/ANIM:0;
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
+    const i=r*COLS+c,v=grid[i];
+    if(!v)continue;
+    if(anim&&anim.rows.indexOf(r)>=0){
+      if(c/COLS<=p)continue;            // スイープで消えたマス
+      cell(bctx,c*CELL,r*CELL,CELL,COLORS[v],1-p);
+    }else cell(bctx,c*CELL,r*CELL,CELL,cellColor(i));
+  }
+  // 着弾したブロックの光（板は震えない）
+  for(const g of FX.glow){
+    const a=Math.max(0,g.life/g.max);
+    if(a<=0)continue;
+    const px=g.x*CELL,py=g.y*CELL;
+    bctx.globalAlpha=a*.55;
+    bctx.fillStyle='#fff';
+    rr(bctx,px+1,py+1,CELL-2,CELL-2,Math.min(4,CELL/4));bctx.fill();      // 白く光る上乗せ
+    bctx.globalAlpha=a*.3;
+    rr(bctx,px-3,py-3,CELL+6,CELL+6,Math.min(7,CELL/3));bctx.fill();       // 周囲のハロ
+    bctx.globalAlpha=a*.15;
+    rr(bctx,px-8,py-8,CELL+16,CELL+16,Math.min(11,CELL/2));bctx.fill();    // 外側のハロ
+    bctx.globalAlpha=1;
+  }
+  if(anim){
+    for(const r of anim.rows){
+      const x=p*COLS*CELL,y=r*CELL;
+      bctx.globalAlpha=(1-p)*.22;
+      bctx.fillStyle='#fff';bctx.fillRect(0,y,x,CELL);
+      bctx.globalAlpha=(1-p)*.9;
+      bctx.fillRect(0,y+CELL/2-1,x,2);            // 走査ライン
+      bctx.globalAlpha=1;
+      bctx.fillStyle=COLORS[grid[r*COLS+Math.min(COLS-1,Math.floor(p*COLS))]]||'#fff';
+      bctx.globalAlpha=.85;
+      bctx.fillRect(x-3,y,3,CELL);                // 先端の光
+      bctx.globalAlpha=1;
+    }
+  }
+  for(const q of FX.parts){
+    bctx.globalAlpha=Math.max(0,q.life);
+    bctx.fillStyle=COLORS[q.t]||'#fff';
+    bctx.fillRect(q.x-q.s/2,q.y-q.s/2,q.s,q.s);
+  }
+  for(const q of FX.rings){
+    const a=Math.max(0,q.life/q.max);
+    if(a<=0)continue;
+    const r=q.r0+(q.r1-q.r0)*(1-a);            // 時間とともに広がる
+    bctx.globalAlpha=a*.55;
+    bctx.strokeStyle=COLORS[q.t]||'#fff';
+    bctx.lineWidth=Math.max(1,3*a);
+    bctx.beginPath();bctx.arc(q.x,q.y,r,0,Math.PI*2);bctx.stroke();
+  }
+  bctx.globalAlpha=1;
+  bctx.globalAlpha=1;
+  if(over){
+    drawCause(bctx,1);   // 出現位置が塞がれたネクストミノ（帯内の上半分だけ点滅）
+  }else if(piece){
+    const fy=dropY();
+    if(!dropAnim){
+      let gy=piece.y;
+      while(!collides(piece.t,piece.s,piece.x,gy+1))gy++;
+      for(const [cx,cy] of STATES[piece.t][piece.s])cell(bctx,(piece.x+cx)*CELL,(gy+cy)*CELL,CELL,COLORS[piece.t],.18);
+    }
+    for(const [cx,cy] of STATES[piece.t][piece.s])cell(bctx,(piece.x+cx)*CELL,(fy+cy)*CELL,CELL,COLORS[piece.t]);
+  }
+  if(FX.flash>0){
+    bctx.globalAlpha=FX.flash*.3;
+    bctx.fillStyle='#fff';
+    bctx.fillRect(0,-TOP,board.width,board.height);   // 余白も含めて覆う
+    bctx.globalAlpha=1;
+  }
+  bctx.restore();
+  drawOver();
+  if(!started)drawStart();
+  else if(demo)drawDemo();
+  hctx.clearRect(0,0,holdC.width,holdC.height);
+  mini(hctx,hold,holdC.width/2,holdC.height/2,14,canHold?1:.45);
+  nctx.clearRect(0,0,nextC.width,nextC.height);
+  drawNext();
+}
+
+const keys={left:false,right:false,down:false};
+let dasDir=0,dasT=0,arrT=0,softT=0,last=performance.now();
+function togglePause(){paused=!paused;say(paused?'ポーズ中':'');if(paused)bgmStop();else if(!over)bgmStart();}
+// 方向・ソフトドロップはキーボードとゲームパッドで共通（押した瞬間1歩、押しっぱなしは DAS/ARR で反復）
+function pressDir(d){
+  if(d<0)keys.left=true;else keys.right=true;
+  dasDir=d;dasT=0;arrT=0;
+  act(d<0?'left':'right');
+}
+function releaseDir(d){
+  if(d<0)keys.left=false;else keys.right=false;
+  dasDir=keys.left?-1:(keys.right?1:0);
+}
+function pressSoft(){keys.down=true;softT=0;act('soft');}
+function releaseSoft(){keys.down=false;}
+function act(a){
+  if(a==='start'){if(!started||over)startGame();else togglePause();return;}   // 開始／ポーズはSTARTで統一
+  if(a==='bgm'){bgmOn=!bgmOn;if(bgmOn){if(!paused&&!over&&started)bgmStart();}else bgmStop();say(bgmOn?'BGM ON':'BGM OFF');return;}
+  if(!started)return;
+  if(a==='left')move(-1,0);
+  else if(a==='right')move(1,0);
+  else if(a==='ccw')rotate(-1);
+  else if(a==='cw')rotate(1);
+  else if(a==='soft'){if(move(0,1))addScore(1);}   // デモ中は加算なし
+  else if(a==='hard')hardDrop();
+  else if(a==='hold')holdPiece();
+  if(!demo&&a!=='hold')recAct(a);   // プレイヤーの手を記録（ホールドは板面が揃わないので残さない）
+}
+document.addEventListener('keydown',e=>{
+  if(e.repeat)return;
+  armAudio();
+  markInput();
+  if(demo){stopDemo();return;}
+  const k=e.key;
+  if(['ArrowLeft','ArrowRight','ArrowDown','ArrowUp',' '].indexOf(k)>=0)e.preventDefault();
+  if(k==='m'||k==='M'){soundOn=!soundOn;if(!soundOn)bgmStop();else if(!paused&&!over&&started)bgmStart();say(soundOn?'音 ON':'音 OFF');return;}
+  if(k==='b'||k==='B'){bgmOn=!bgmOn;if(bgmOn){if(!paused&&!over&&started)bgmStart();}else bgmStop();say(bgmOn?'BGM ON':'BGM OFF');return;}
+  if(k==='Enter'){if(!started||over)startGame();else togglePause();return;}
+  if(!started){
+    if(k===' ')startGame();
+    return;
+  }
+  if(k==='p'||k==='P'){togglePause();return;}   // STARTと同じ（キーのエイリアス）
+  if(paused||over||anim)return;
+  if(k==='ArrowLeft')pressDir(-1);
+  else if(k==='ArrowRight')pressDir(1);
+  else if(k==='ArrowDown')pressSoft();
+  else if(k==='ArrowUp'||k==='x'||k==='X')rotate(1);
+  else if(k==='z'||k==='Z')rotate(-1);
+  else if(k===' ')hardDrop();
+  else if(k==='c'||k==='C')holdPiece();
+});
+document.addEventListener('keyup',e=>{
+  const k=e.key;
+  if(k==='ArrowLeft')releaseDir(-1);
+  if(k==='ArrowRight')releaseDir(1);
+  if(k==='ArrowDown')releaseSoft();
+});
+(function(){
+  const pad=document.getElementById('pad');
+  const HOLD={left:1,right:1,soft:1};
+  let heldBtn=null;
+  function release(){
+    if(!heldBtn)return;
+    const a=heldBtn.dataset.a;heldBtn=null;
+    if(a==='left')releaseDir(-1);else if(a==='right')releaseDir(1);else if(a==='soft')releaseSoft();
+  }
+  pad.addEventListener('pointerdown',e=>{
+    const b=e.target.closest('button');
+    if(!b)return;
+    e.preventDefault();
+    armAudio();
+    markInput();
+    if(demo){stopDemo();return;}
+    const a=b.dataset.a;
+    if(HOLD[a]){
+      if(!started||paused||over||anim)return;
+      release();heldBtn=b;
+      if(a==='left')pressDir(-1);else if(a==='right')pressDir(1);else pressSoft();
+    }else act(a);
+  });
+  ['pointerup','pointercancel','lostpointercapture'].forEach(t=>pad.addEventListener(t,release));
+  window.addEventListener('blur',release);
+  pad.addEventListener('contextmenu',e=>e.preventDefault());
+  // 盤面タップで回転（スタート前は開始）、ダブルタップ拡大の抑止
+  document.getElementById('board').addEventListener('pointerdown',e=>{
+    e.preventDefault();armAudio();markInput();
+    if(demo){stopDemo();return;}
+    if(!started){startGame();return;}
+    act('cw');
+  });
+  document.addEventListener('gesturestart',e=>e.preventDefault());
+})();
+function startGame(){
+  savePlay();      // 前のプレイを記録に残す（デモで時々再現する）
+  recStart();
+  started=true;
+  reset();      // 曲を最初（小節0）から鳴らす（armedなら）
+  armAudio();   // 最初のジェスチャーで音声解锁、armedでなければここでBGM開始
+  say('スタート！');
+}
+/* ---------------- ゲームパッド（Gamepad API） ----------------
+   標準（W3C）ボタン番号の割り当て：✕=ハードドロップ ○=ホールド □=左回し △=右回し
+   L1=ソフトドロップ R1=ハードドロップ L2=ホールド START=開始（プレイ中はポーズ）、R2/SELECTはSTARTと同じ
+   十字キー・左スティックは押しっぱなしで DAS/ARR 反復（キーボードと同じ処理）。
+   接続済み端末の最初の1台を使い、双方向ランプは着弾・ライン消去・ゲームオーバーで鳴らす。 */
+const GP_DEAD=0.35;
+const GP_MAP={0:'hard',1:'hold',2:'ccw',3:'cw',5:'hard',6:'hold',7:'start',8:'start',9:'start',12:'cw'};
+let gpPad=null,gpName='',gpPrev={},gpDir=0,gpSoft=false;
+
+function gpUi(){
+  if(!ui.gpstate)return;
+  ui.gpstate.textContent=gpName||'未接続';
+}
+function rumble(ms,strong,weak){
+  if(!gpPad||!gpPad.vibrationActuator)return;
+  try{gpPad.vibrationActuator.playEffect('dual-rumble',{duration:ms,strongValue:strong,weakValue:weak});}catch(e){}
+}
+function gpPoll(){
+  if(typeof navigator==='undefined'||!navigator.getGamepads)return;
+  let p=null;
+  try{for(const g of navigator.getGamepads())if(g){p=g;break;}}catch(e){return;}
+  if(!p){
+    if(gpPad){gpPad=null;gpName='';gpPrev={};gpDir=0;gpSoft=false;gpUi();say('コントローラーが切れました');}
+    return;
+  }
+  if(!gpPad){gpPad=p;gpName=p.id||'コントローラー';gpUi();say('コントローラー: '+gpName);}
+  const b=p.buttons||[],ax=p.axes||[];
+  const on=i=>!!(b[i]&&b[i].pressed);
+  const fresh=[];
+  for(let i=0;i<b.length;i++){const v=on(i);if(v&&!gpPrev[i])fresh.push(i);gpPrev[i]=v;}
+  let d=0,soft=false;
+  if(on(14))d=-1;else if(on(15))d=1;
+  else if(ax.length&&Math.abs(ax[0])>GP_DEAD)d=ax[0]<0?-1:1;
+  if(on(13)||on(4))soft=true;else if(ax.length>1&&ax[1]>GP_DEAD)soft=true;
+  if(!fresh.length&&!d&&!soft&&!gpDir&&!gpSoft)return;      // 入力のないフレームは何もしない
+  armAudio();markInput();
+  if(demo){stopDemo();return;}
+  if(d!==gpDir){if(gpDir)releaseDir(gpDir);gpDir=d;if(d)pressDir(d);}
+  if(soft!==gpSoft){if(soft)pressSoft();else releaseSoft();gpSoft=soft;}
+  for(const i of fresh){
+    const a=GP_MAP[i];
+    if(!a)continue;
+    act(a);
+  }
+}
+if(window.addEventListener){
+  window.addEventListener('gamepadconnected',e=>{gpPad=e.gamepad;gpName=(e.gamepad&&e.gamepad.id)||'コントローラー';gpUi();say('コントローラー接続: '+gpName);});
+  window.addEventListener('gamepaddisconnected',()=>{gpPad=null;gpName='';gpPrev={};gpDir=0;gpSoft=false;gpUi();say('コントローラーが切れました');});
+}
+const bgmBtn=document.getElementById('bgmbtn');
+if(bgmBtn)bgmBtn.addEventListener('click',()=>{armAudio();act('bgm');});
+const fmSel=document.getElementById('fmpreset');
+if(fmSel)fmSel.addEventListener('change',()=>{
+  fmLead=FM.presets[fmSel.value]||FM.presets.bell;
+  fmLeadUser=true;
+  say('音色: '+(fmSel.options[fmSel.selectedIndex].text));
+});
+
+function gravityStep(dt){
+  dropT+=dt;
+  const g=GRAVITY[Math.min(level,20)]*1000;
+  while(dropT>=g){dropT-=g;if(!move(0,1))break;}
+  fracY=grounded?0:dropT/g;
+}
+/* ---------------- デモ（アトラクトモード） ----------------
+   起動時・ゲームオーバー後、30秒間 START が押されなければ AI が自動でプレイする。
+   何らかの入力があればデモは止まり、新しいゲームが始まる。
+   デモ中のゲームオーバーも同じ30秒（無操作）スタート待ちになり、過ぎればデモが再開する。
+   デモ中はスコアを更新しない（直前プレイのスコア表示のまま、ハイスコアも更新しない）。 */
+const DEMO_DELAY=30000;    // 30秒（ゲームオーバー後のスタート待ち＝無操作待ち）
+const DEMO_STEP=180;       // AIの一手の間隔（基準）
+const DEMO_REPLAY_CHANCE=0.55;   // デモ開始時に前プレイを再現する確率
+let demo=false,idle=0,demoMoveT=0,demoTarget=null;
+let demoRun=null,demoRunIdx=0,demoSeqIdx=0,demoGap=DEMO_STEP,demoOrder=0,demoSoft=0,demoWait=0,demoBeat=0;
+
+function markInput(){idle=0;}
+function demoStepGap(){return Math.round(DEMO_STEP*(0.7+Math.random()*0.7));}
+function demoSoftGap(){return Math.round(70+Math.random()*60);}   // 1歩ずつ落とすときは間隔を詰めて落下らしくする
+
+/* ---------------- 手数の記録（リプレイ） ----------------
+   プレイヤーの操作をブロック単位で記録し、デモで時々そのまま再現する。
+   記録は localStorage に直近 REPLAY_MAX プレイ分だけ残す。
+   （ホールドは板面の状態が揃わないと再現できないため操作記録には入れない） */
+const REPLAY_KEY='tetris_replay_qwen3';
+const REPLAY_MAX=6;        // 残すプレイ数
+const REPLAY_MIN=8;        // これ以上のブロック数から記録に残す
+const REPLAY_PIECES=80;    // 1プレイの記録上限
+let replays=[],recPlay=null,recSeq=[];
+
+function loadReplays(){
+  try{
+    const raw=localStorage.getItem(REPLAY_KEY);
+    if(raw){const a=JSON.parse(raw);if(Array.isArray(a))replays=a;}
+  }catch(e){replays=[];}
+}
+function saveReplays(){
+  try{localStorage.setItem(REPLAY_KEY,JSON.stringify(replays));}catch(e){}
+}
+function recStart(){recPlay=[];recSeq=[];}
+function recAct(a){if(!recPlay||!started||demo||over||paused)return;recSeq.push(a);}
+function recEnd(){   // 1ブロック分の記録を確定
+  if(!recPlay||!piece)return;
+  if(recPlay.length<REPLAY_PIECES)recPlay.push({t:piece.t,seq:recSeq.slice()});
+  recSeq=[];
+}
+function savePlay(){
+  if(!recPlay||recPlay.length<REPLAY_MIN)return;
+  replays.push(recPlay);
+  if(replays.length>REPLAY_MAX)replays.shift();
+  saveReplays();
+}
+function pickReplay(){return replays.length?replays[Math.floor(Math.random()*replays.length)]:null;}
+
+// 全回転×全列を1手先読みして「消える行数 + 着地位置 - 穴 - 高さ」で良い置き場を選ぶ
+// （常に最善ではなく上位3から重み付きで選ぶので、デモは単調にならない）
+function bestPlacement(){
+  if(!piece)return null;
+  const cands=[];
+  for(let s=0;s<4;s++)for(let x=0;x<COLS;x++){
+    if(collides(piece.t,s,x,piece.y))continue;
+    let y=piece.y;
+    while(!collides(piece.t,s,x,y+1))y++;
+    const cells=[];
+    let bottom=-1;
+    for(const [cx,cy] of STATES[piece.t][s]){
+      const gx=x+cx,gy=y+cy;
+      if(gx<0||gx>=COLS||gy<0||gy>=ROWS)continue;
+      cells.push([gx,gy]);grid[gy*COLS+gx]=piece.t;
+      if(gy>bottom)bottom=gy;
+    }
+    let clears=0,holes=0,maxH=0;
+    for(let r=0;r<ROWS;r++){
+      let full=true;
+      for(let c=0;c<COLS;c++)if(!grid[r*COLS+c]){full=false;break;}
+      if(full)clears++;
+    }
+    for(let c=0;c<COLS;c++){
+      let seen=false,colH=0;
+      for(let r=0;r<ROWS;r++){
+        if(grid[r*COLS+c]){if(!seen){seen=true;colH=ROWS-r;}}
+        else if(seen)holes++;
+      }
+      if(colH>maxH)maxH=colH;
+    }
+    const sc=clears*220+bottom*12-holes*26-maxH*14+(x>=3&&x<=6?2:0)+Math.random()*3;
+    for(const [gx,gy] of cells)grid[gy*COLS+gx]=null;
+    cands.push({s,x,sc});
+  }
+  if(!cands.length)return null;
+  cands.sort((a,b)=>b.sc-a.sc);
+  const r=Math.random(),k=r<0.6?0:(r<0.85?1:2);
+  return cands[Math.min(k,cands.length-1)];
+}
+function demoStep(){
+  if(!piece||over||paused||anim||dropAnim)return;
+  // 前プレイの再現中：記録された操作を1手ずつ実行する
+  if(demoRun){
+    const e=demoRun[demoRunIdx];
+    if(!e){demoRun=null;}
+    else if(demoSeqIdx<e.seq.length)act(e.seq[demoSeqIdx++]);
+    else act('hard');            // 記録の末尾がドロップでない場合は落とす
+    return;
+  }
+  if(demoBeat>0){demoBeat--;return;}                 // 時々一呼吸置く
+  if(!demoTarget)demoTarget=bestPlacement();
+  if(!demoTarget)return;
+  // 今のブロックが悪手そうならホールドで回す
+  if(canHold&&!hold&&demoTarget.sc<60&&Math.random()<0.3){act('hold');demoTarget=null;return;}
+  // 常に「回転→列寄せ」の順とは限らない（先に列を寄せることもある）
+  const rotFirst=demoOrder===0;
+  if(piece.s!==demoTarget.s&&rotFirst){
+    if(!rotate(1)){demoTarget=null;return;}
+    return;                                  // 回転したら次の一手
+  }
+  if(piece.x!==demoTarget.x){
+    const dx=demoTarget.x>piece.x?1:-1;
+    if(!move(dx,0)){demoTarget=null;return;}
+    return;                                  // 1歩進んだら次の一手
+  }
+  if(piece.s!==demoTarget.s){
+    if(!rotate(1)){demoTarget=null;return;}
+    return;
+  }
+  if(demoSoft>0){demoSoft--;if(move(0,1))return;}   // 何セルか1歩ずつ落とす
+  if(demoWait>0){demoWait--;return;}                // 重力で落ちるのを一瞬待ってから落とす
+  if(grounded){return;}                             // 着地済みなら自然着弾（ロック待ち）に任せる
+  act('hard');
+  demoTarget=null;
+}
+function startDemo(){
+  demo=true;idle=0;demoMoveT=0;demoTarget=null;
+  demoGap=demoStepGap();demoRun=null;demoRunIdx=0;demoSeqIdx=0;demoWait=0;
+  recPlay=null;recSeq=[];      // デモ中の手は記録しない
+  started=true;
+  const prev=score;   // 直前プレイのスコアはそのまま（デモ中はスコアを更新しない）
+  if(Math.random()<DEMO_REPLAY_CHANCE)demoRun=pickReplay();   // 時々前プレイを再現する
+  reset();      // demo=true なので bgmStart() は何もしない（BGMは停止したまま）
+  score=prev;
+  bgmUi();
+  say(demoRun?'デモ：前プレイを再現中（無音）':'デモ中（無音）— START で開始');
+}
+function stopDemo(){
+  if(!demo)return;
+  demo=false;demoTarget=null;idle=0;demoMoveT=0;
+  demoRun=null;demoRunIdx=0;demoSeqIdx=0;demoWait=0;
+  recStart();   // ここからプレイヤーの手を記録する
+  reset();      // 入力でデモが終わった瞬間からBGMが再開する
+  bgmUi();
+  say('スタート！');
+}
+function drawDemo(){
+  const cx=board.width/2;
+  bctx.save();
+  bctx.textAlign='center';
+  bctx.textBaseline='alphabetic';
+  bctx.globalAlpha=.9;
+  bctx.font='700 13px system-ui,Meiryo,sans-serif';
+  bctx.fillStyle='#7fb2ff';
+  bctx.fillText('DEMO',cx,16);
+  bctx.globalAlpha=(Math.sin(performance.now()/300)*.5+.5)*.7+.3;
+  bctx.font='11px system-ui,Meiryo,sans-serif';
+  if(demoRun){
+    bctx.fillStyle='#ffd873';
+    bctx.fillText('前プレイを再現中',cx,32);
+  }else{
+    bctx.fillStyle='#9fb6d8';
+    bctx.fillText('START で開始',cx,32);
+  }
+  bctx.globalAlpha=1;
+  bctx.restore();
+}
+function loop(now){
+  const dt=Math.min(50,now-last);last=now;
+  stepFx(dt);
+  gpPoll();
+  if(!started||over){
+    idle+=dt;
+    if(idle>=DEMO_DELAY)startDemo();   // デモ中のゲームオーバーも同じ30秒無操作待ちでデモ再開
+  }
+  if(started&&!paused){
+    if(over){
+      overT+=dt;
+    }else{
+      elapsed+=dt;
+      if(anim){
+        anim.t+=dt;
+        if(anim.t>=ANIM)finishAnim();
+      }else if(dropAnim){
+        stepDrop(dt);                       // ハードドロップの滑らかな落下（着弾まで入力不可）
+      }else{
+        if(demo){
+          demoMoveT+=dt;
+          if(demoMoveT>=demoGap){
+            demoMoveT=0;
+            demoStep();
+            demoGap=demoSoft>0?demoSoftGap():demoStepGap();   // 1歩ずつ落下中は間隔を詰める
+          }
+        }else{
+          if(dasDir){dasT+=dt;if(dasT>=DAS){arrT+=dt;if(arrT>=ARR){arrT=0;move(dasDir,0);}}}
+          if(keys.down){softT+=dt;if(softT>=ARR){softT=0;if(move(0,1))addScore(1);}}
+        }
+        if(piece){
+          gravityStep(dt);
+          if(grounded){lockT+=dt;if(lockT>=LOCK)lock();}
+        }
+      }
+    }
+  }
+  draw();hud();
+  requestAnimationFrame(loop);
+}
+// 画面に収まらないときだけゲームを縮小（iPhone等の狭い画面で右カラムが切れないようにする）
+// パソコン（広い画面）では表示を2倍にする。タッチ端末（電話）は1倍
+function isPC(){
+  if(!window.innerWidth || window.innerWidth <= 720) return false;   // 狭い画面は電話扱い
+  if(window.matchMedia && window.matchMedia('(pointer:coarse)').matches) return false;   // 主入力がタッチの端末は1倍
+  return true;
+}
+function fitGame(){
+  const el=document.querySelector('.game');
+  if(!el||!window.innerWidth||!window.innerHeight)return;
+  const maxZoom=isPC()?2:1;   // パソコンは最大2倍。2倍が画面に収まらない分だけ縮小
+  el.style.zoom=1;            // 自然サイズで測る（zoomが積み重ならないようにリセット）
+  el.style.transform='';
+  const w=el.offsetWidth,h=el.offsetHeight;
+  const s=Math.min(maxZoom,(window.innerWidth-16)/w,(window.innerHeight-16)/h);
+  el.style.zoom=s;
+  // zoom非対応環境（古いFirefox等）だけ transform で代用する（zoomとtransformの二重縮小を避ける）
+  if(window.CSS&&CSS.supports&&!CSS.supports('zoom','1')){
+    el.style.zoom=1;el.style.transformOrigin='top center';el.style.transform='scale('+s+')';
+  }
+}
+if(window.addEventListener){
+  window.addEventListener('resize',fitGame);
+  window.addEventListener('orientationchange',fitGame);
+}
+fitGame();
+loadHi();
+loadReplays();
+reset();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
