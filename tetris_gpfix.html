@@ -308,7 +308,7 @@ function thud(vol,hard){
 // 各小節 = 16分音符 (meter*4) 個分（既定 2/4拍）。曲ごとに meter / bpm を指定できる。
 const BGM_BPM=140;
 const BGM_UNIT=60/(BGM_BPM*4);              // 16分音符1つ分の秒数（既定）
-const BGM_LEVEL_STEP=5;                     // 5レベルごとに曲が変わる
+const BGM_LEVEL_STEP=5;                     // 5レベルごと（レベル5, 10, 15…）に曲と背景が変わる
 function unitSeconds(tr){return 60/((tr.bpm||BGM_BPM)*4);}   // 曲ごとの16分音符1つ分の秒数
 function barSixteenths(tr){return (tr.meter||2)*4;}          // 曲ごとの小節の長さ（16分音符数）
 const BGM_TRACKS=[
@@ -460,7 +460,7 @@ const BGM_TRACKS=[
     [[64,2],[67,2],[65,2],[64,2],[62,4],[0,2],[71,2],38] // EGFE D2 zB   | Dm
   ]}
 ];
-function bgmTrackForLevel(lv){return Math.floor((lv-1)/BGM_LEVEL_STEP)%BGM_TRACKS.length;}
+function bgmTrackForLevel(lv){return Math.floor(lv/BGM_LEVEL_STEP)%BGM_TRACKS.length;}
 function hz(n){return 440*Math.pow(2,(n-69)/12);}
 function bgmUi(){
   if(ui.bgm)ui.bgm.textContent=demo?'OFF（デモ）':(bgmOn?'ON':'OFF');
