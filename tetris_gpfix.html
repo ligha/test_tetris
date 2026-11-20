@@ -16,9 +16,10 @@
 html,body{touch-action:manipulation;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
 button{touch-action:manipulation}
 body{margin:0;min-height:100dvh;background:radial-gradient(1200px 800px at 50% -10%,#1a2035,#0f1220);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Meiryo,sans-serif;display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-start;padding:calc(14px + env(safe-area-inset-top)) calc(18px + env(safe-area-inset-bottom))}
+body::before{content:"";position:fixed;left:0;right:0;top:var(--bgt,0);height:var(--bgh,100%);z-index:-1;pointer-events:none;background:linear-gradient(rgba(11,14,24,.25),rgba(11,14,24,.25)),var(--pbg,none) center/cover no-repeat}   /* ページ背景：BGMの曲と連動して切り替わる */
 .game{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start;max-width:100%}
 canvas{display:block;max-width:100%;background:#0b0e18;border:1px solid var(--line);border-radius:10px}
-#board{box-shadow:0 12px 40px rgba(0,0,0,.45)}
+#board{background:transparent;box-shadow:0 12px 40px rgba(0,0,0,.45)}
 .side{width:190px;display:flex;flex-direction:column;gap:10px}
 .box{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px}
 .box h2{margin:0 0 8px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
@@ -307,7 +308,7 @@ function thud(vol,hard){
 // 各小節 = 16分音符 (meter*4) 個分（既定 2/4拍）。曲ごとに meter / bpm を指定できる。
 const BGM_BPM=140;
 const BGM_UNIT=60/(BGM_BPM*4);              // 16分音符1つ分の秒数（既定）
-const BGM_LEVEL_STEP=5;                     // 5レベルごとに曲が変わる
+const BGM_LEVEL_STEP=5;                     // 5レベルごと（レベル5, 10, 15…）に曲と背景が変わる
 function unitSeconds(tr){return 60/((tr.bpm||BGM_BPM)*4);}   // 曲ごとの16分音符1つ分の秒数
 function barSixteenths(tr){return (tr.meter||2)*4;}          // 曲ごとの小節の長さ（16分音符数）
 const BGM_TRACKS=[
@@ -459,7 +460,7 @@ const BGM_TRACKS=[
     [[64,2],[67,2],[65,2],[64,2],[62,4],[0,2],[71,2],38] // EGFE D2 zB   | Dm
   ]}
 ];
-function bgmTrackForLevel(lv){return Math.floor((lv-1)/BGM_LEVEL_STEP)%BGM_TRACKS.length;}
+function bgmTrackForLevel(lv){return Math.floor(lv/BGM_LEVEL_STEP)%BGM_TRACKS.length;}
 function hz(n){return 440*Math.pow(2,(n-69)/12);}
 function bgmUi(){
   if(ui.bgm)ui.bgm.textContent=demo?'OFF（デモ）':(bgmOn?'ON':'OFF');
@@ -609,6 +610,7 @@ function bgmTick(){
     if(bgmBar>=tr.bars.length)bgmBar=0;
     if(bgmPending!==bgmTrack){                    // 小節の区切り（最大1小節）で曲を切り替える
       bgmTrack=bgmPending;bgmBar=0;bgmUi();
+      setBgForTrack(bgmTrack);   // 曲に合わせて盤面の背景画像も切替
     }
   }
 }
@@ -616,7 +618,7 @@ function bgmStart(){
   if(muted()||!bgmOn||bgmPlaying||!armed)return;   // デモ中はBGMも鳴らさない
   try{
     actx=actx||new (window.AudioContext||window.webkitAudioContext)();
-    if(actx.state==='suspended')actx.resume();
+    if(actx.state!=='running')actx.resume();
     bgmGain=actx.createGain();bgmGain.gain.value=0.42;
     bgmFilter=actx.createBiquadFilter();bgmFilter.type='lowpass';bgmFilter.frequency.value=5200;bgmFilter.Q.value=0.6;
     if(actx.createDynamicsCompressor){                 // 層が増えるので歪みを抑える
@@ -638,6 +640,7 @@ function bgmStart(){
     bgmLfo=actx.createOscillator();bgmLfo.type='sine';bgmLfo.frequency.value=FM_VIB;
     bgmVib=actx.createGain();bgmVib.gain.value=FM_VIB_DEPTH;bgmLfo.connect(bgmVib);bgmLfo.start();
     bgmPlaying=true;bgmTrack=bgmTrackForLevel(level);bgmPending=bgmTrack;bgmBar=0;bgmNext=actx.currentTime+0.15;
+    setBgForTrack(bgmTrack);
     bgmTimer=setInterval(bgmTick,60);bgmTick();
   }catch(e){}
   bgmUi();
@@ -653,12 +656,22 @@ function bgmStop(){
   if(bgmDelay){bgmDelay.disconnect();bgmDelay=null;bgmFb=null;bgmWet=null;}
   bgmUi();
 }
+// iPhone(Safari)は無音のバッファを鳴らして音声を解錠しないと出力が始まらない。
+// 解錠は毎回のタップ・キー操作で確認する（途中で suspended / interrupted に戻ることがあるため）
+function unlockAudio(){
+  try{const src=actx.createBufferSource();src.buffer=actx.createBuffer(1,1,22050);src.connect(actx.destination);src.start(0);}catch(e){}
+  if(actx.state!=='running')actx.resume();
+}
 function armAudio(){
+  if(actx&&actx.state!=='running')unlockAudio();
   if(armed)return;
   armed=true;
   try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();}catch(e){return;}
+  unlockAudio();
   bgmUi();if(started)bgmStart();
 }
+// iOSはpointerdownの中のresume()が効かないことがあるため、タッチの終端・クリックでも解錠を試す
+['touchend','click'].forEach(t=>document.addEventListener(t,()=>{if(actx&&actx.state!=='running')unlockAudio();},true));
 
 // ---- 揃ったときのエフェクト ----
 const FX={parts:[],glow:[],rings:[],flash:0,shake:0};
@@ -1068,10 +1081,40 @@ function drawStart(){
   bctx.globalAlpha=1;
   bctx.restore();
 }
+// ---- 盤面の背景画像（Tetris_image）：BGMの曲ごとに切り替え、盤面の上下いっぱいに合わせる ----
+const BG_IMGS=[                                  // 曲 i → 画像 i（曲は6つ、画像は7枚）
+  "Tetris_image/Gemini_Generated_Image_l1eevvl1eevvl1ee.jpg",
+  "Tetris_image/Gemini_Generated_Image_qn6hqn6hqn6hqn6h.jpg",
+  "Tetris_image/Sergiyev.jpg",
+  "Tetris_image/church-of-the-saviour-on-the-blood.jpg",
+  "Tetris_image/聖ワシリイ大聖堂.jpg",
+  "Tetris_image/聖ワシリイ大聖堂_illust.jpg",
+  "Tetris_image/聖ワシリイ大聖堂_illust2.jpg"
+];
+let bgSrc='';
+function setBgForTrack(t){                      // ページ背景をBGMの曲に合わせて切り替える
+  const src=encodeURI(BG_IMGS[t%BG_IMGS.length]);
+  if(bgSrc===src)return;
+  bgSrc=src;
+  document.documentElement.style.setProperty('--pbg','url("'+src+'")');
+}
+setBgForTrack(0);
+// ページ背景は盤面の上下より少しだけはみ出した帯にする
+const BG_OVERHANG=20;
+function fitPageBg(){
+  const r=board.getBoundingClientRect(),st=document.documentElement.style;
+  st.setProperty('--bgt',(r.top-BG_OVERHANG)+'px');
+  st.setProperty('--bgh',(r.height+BG_OVERHANG*2)+'px');
+}
+fitPageBg();
+addEventListener('resize',fitPageBg);addEventListener('scroll',fitPageBg,{passive:true});
+if(window.ResizeObserver)new ResizeObserver(fitPageBg).observe(board);
+
 function draw(){
   bctx.save();
-  bctx.fillStyle='#0b0e18';
-  bctx.fillRect(0,0,board.width,board.height);          // 上余白（TOP＝はみ出しブロック用）も含めて背景
+  bctx.clearRect(0,0,board.width,board.height);          // 盤面は透明にしてページ背景（BGMの曲に合わせて切替）を見せる
+  bctx.fillStyle='rgba(11,14,24,.55)';                  // ブロックを見やすくする薄い暗幕
+  bctx.fillRect(0,0,board.width,board.height);
   if(FX.shake>0.1)bctx.translate((Math.random()-0.5)*FX.shake,(Math.random()-0.5)*FX.shake);
   bctx.translate(0,TOP);                                // 板を余白分だけ下にずらす（上のはみ出しは負のy）
   bctx.strokeStyle='rgba(255,255,255,.045)';bctx.lineWidth=1;
