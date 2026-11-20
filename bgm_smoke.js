@@ -1,6 +1,6 @@
 // BGM (FM) scheduler smoke test  Efake AudioContext
 const fs=require('fs');
-const html=fs.readFileSync(require('path').join(__dirname,'tetris_gpfix.html'),'utf8');
+const html=fs.readFileSync(require('path').join(__dirname,'index.html'),'utf8');
 const src=html.match(/<script>([\s\S]*?)<\/script>/)[1];
 const noop=()=>{};
 const ctxStub={fillStyle:'',strokeStyle:'',lineWidth:1,globalAlpha:1,font:'',textAlign:'',textBaseline:'',

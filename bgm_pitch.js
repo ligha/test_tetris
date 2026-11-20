@@ -1,7 +1,7 @@
 // コロブチカ音程監査: BGMデータを参照MIDI（tetris_main_theme.mid = Nintendo版テーマ）と小節単位で照合する
 const fs=require('fs'),path=require('path');
 const DIR=__dirname;
-const h=fs.readFileSync(path.join(DIR,'tetris_gpfix.html'),'utf8');
+const h=fs.readFileSync(path.join(DIR,'index.html'),'utf8');
 const TRACKS=eval(h.match(/const BGM_TRACKS=\[[\s\S]*?\n\];/)[0].match(/\[[\s\S]*\]/)[0]);
 const NM=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
 const nm=n=>n?NM[n%12]+(Math.floor(n/12)-1):'rest';

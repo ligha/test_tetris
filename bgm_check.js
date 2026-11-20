@@ -1,6 +1,6 @@
 // BGM melody sanity check (all tracks)
 const fs=require('fs');
-const h=fs.readFileSync(require('path').join(__dirname,'tetris_gpfix.html'),'utf8');
+const h=fs.readFileSync(require('path').join(__dirname,'index.html'),'utf8');
 const m=h.match(/const BGM_TRACKS=\[[\s\S]*?\n\];/);
 if(!m){console.log('BGM_TRACKS not found');process.exit(1);}
 const TRACKS=eval(m[0].slice(m[0].indexOf('[')));

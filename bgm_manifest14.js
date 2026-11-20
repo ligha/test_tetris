@@ -20,7 +20,7 @@ const BGM_MANIFEST=[
   {name:'Nedelya',            meter:2,bpm:104,key:[9,11,0,2,4,5,7],source:'未入手（一週間・原題要確認）',verified:false}
 ];
 const fs=require('fs'),path=require('path');
-const h=fs.readFileSync(path.join(__dirname,'tetris_gpfix.html'),'utf8');
+const h=fs.readFileSync(path.join(__dirname,'index.html'),'utf8');
 const TRACKS=eval(h.match(/const BGM_TRACKS=\[[\s\S]*?\n\];/)[0].match(/\[[\s\S]*\]/)[0]);
 const filled=new Set(TRACKS.map(t=>t.name));
 let missing=0;
