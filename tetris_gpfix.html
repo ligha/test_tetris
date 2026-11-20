@@ -54,6 +54,18 @@ button.primary:active{background:#3a5b93}
   .box.hold{grid-column:3;grid-row:1}
   .box.next{grid-column:3;grid-row:2}
 }
+/* 広い画面：盤面の左右に画像を置き、盤面と同じ縦サイズに合わせる */
+.deco{display:none}
+@media(min-width:961px){
+  .game{grid-template-columns:clamp(80px,calc((100vw - 800px)/2),240px) 190px auto 190px clamp(80px,calc((100vw - 800px)/2),240px)}
+  .box.stats,.pad{grid-column:2}
+  #board{grid-column:3}
+  .box.hold,.box.next{grid-column:4}
+  .deco{display:block;position:relative;align-self:start;overflow:hidden;border:1px solid var(--line);border-radius:10px;background:#0b0e18;box-shadow:0 12px 40px rgba(0,0,0,.45);min-height:0}
+  .deco img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:opacity .6s ease}
+  .deco-l{grid-column:1;grid-row:1/span 2}
+  .deco-r{grid-column:5;grid-row:1/span 2}
+}
 @media(max-width:720px){
   .info{display:none}
   html,body{height:100%;overflow:hidden;overscroll-behavior:none}
@@ -77,6 +89,7 @@ button.primary:active{background:#3a5b93}
 </head>
 <body>
 <div class="game">
+  <div class="deco deco-l"><img id="decoL" alt=""></div>
   <div class="left">
     <canvas id="board" width="240" height="504"></canvas>
     <div class="pad" id="pad">
@@ -105,6 +118,7 @@ button.primary:active{background:#3a5b93}
       <div class="stat"><span>TIME</span><b id="time">0:00</b></div>
     </div>
   </div>
+  <div class="deco deco-r"><img id="decoR" alt=""></div>
 </div>
 <div class="info">
     <div class="box keys kbdbox">
@@ -1571,6 +1585,40 @@ loadHi();
 loadReplays();
 reset();
 requestAnimationFrame(loop);
+</script>
+<script>
+/* 盤面の左右に表示する画像（Tetris_image フォルダ）を一定間隔で切り替える */
+(function(){
+  var imgs = [
+    "Tetris_image/Gemini_Generated_Image_l1eevvl1eevvl1ee.jpg",
+    "Tetris_image/Gemini_Generated_Image_qn6hqn6hqn6hqn6h.jpg",
+    "Tetris_image/Sergiyev.jpg",
+    "Tetris_image/church-of-the-saviour-on-the-blood.jpg",
+    "Tetris_image/聖ワシリイ大聖堂.jpg",
+    "Tetris_image/聖ワシリイ大聖堂_illust.jpg",
+    "Tetris_image/聖ワシリイ大聖堂_illust2.jpg"
+  ];
+  var L = document.getElementById("decoL"), R = document.getElementById("decoR");
+  if (!L || !R) return;
+  /* 画像の縦サイズを盤面（#board）の縦サイズに揃える */
+  var board = document.getElementById("board");
+  function fitToBoard(){
+    var h = board.getBoundingClientRect().height + "px";
+    L.parentElement.style.height = h;
+    R.parentElement.style.height = h;
+  }
+  fitToBoard();
+  window.addEventListener("resize", fitToBoard);
+  if (window.ResizeObserver) new ResizeObserver(fitToBoard).observe(board);
+  var idx = 0;
+  function show(el, i){ el.src = encodeURI(imgs[i % imgs.length]); }
+  show(L, 0); show(R, Math.floor(imgs.length / 2));
+  setInterval(function(){
+    idx = (idx + 1) % imgs.length;
+    show(L, idx);
+    show(R, idx + Math.floor(imgs.length / 2));
+  }, 8000);
+})();
 </script>
 </body>
 </html>
