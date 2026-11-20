@@ -8,7 +8,7 @@ function mkCtx(rec){
   fillText(t,x,y){rec.push({op:'fillText',t:t,x:x,y:y,fill:c.fillStyle})},
   fillRect(x,y,w,h){rec.push({op:'fillRect',x:x,y:y,w:w,h:h,fill:c.fillStyle})},
   strokeRect(){},clearRect(){},
-  drawImage(im,dx,dy,dw,dh){rec.push({op:'drawImage',dw:dw,dh:dh})},
+  drawImage(im,dx,dy,dw,dh){rec.push({op:'drawImage',dx:dx,dy:dy,dw:dw,dh:dh})},
   save(){},restore(){},beginPath(){},moveTo(x,y){rec.push({op:'moveTo',x:x,y:y})},
   lineTo(){},stroke(){},fill(){},translate(){}};
  return c;
@@ -257,6 +257,15 @@ console.log('--- 背景画像 ---');
  var di=boardRec.filter(function(x){return x.op==='drawImage'});
  ok(di.length>=1,'background drawn on game-screen canvas');
  ok(di.length>=1&&di[0].dh===640,'bg vertical size = game screen height (dh=640)');
+ ok(di.length>=1&&di[0].dy===0,'bg top edge aligned to screen top (dy=0)');
+ /* 縦長 1000x1600 → 上下640に合わせ幅は 1000*640/1600=400 */
+ ok(di.length>=1&&Math.abs(di[0].dw-400)<1,'portrait 1000x1600 scaled to 400x640 (dw='+Math.round(di[0].dw*10)/10+')');
+ /* 横長 1280x698（実際の画像） → 上下640に合わせ幅は 1280*640/698≈1173.6（左右はクリップ） */
+ T.bgImgs[0].naturalWidth=1280;T.bgImgs[0].naturalHeight=698;
+ boardRec.length=0;T.draw();
+ var di2=boardRec.filter(function(x){return x.op==='drawImage'})[0];
+ ok(di2&&di2.dy===0&&di2.dh===640&&Math.abs(di2.dw-1173.64)<1,'landscape 1280x698 scaled to 1173.6x640, top/bottom fit (dw='+(di2?Math.round(di2.dw*10)/10:'-')+')');
+ T.bgImgs[0].naturalWidth=1000;T.bgImgs[0].naturalHeight=1600;
  var imIdx=boardRec.findIndex(function(x){return x.op==='drawImage'});
  var darkIdx=-1;
  for(var i=0;i<boardRec.length;i++)if(i>imIdx&&boardRec[i].op==='fillRect'&&String(boardRec[i].fill).indexOf('rgba(0,0,0,.45)')===0){darkIdx=i;break}

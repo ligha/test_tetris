@@ -412,9 +412,9 @@ function stepBg(dt){
 }
 function drawImgCover(im,al){
  const iw=im.naturalWidth||320,ih=im.naturalHeight||640;
- const s=Math.max(W/iw,H/ih),dw=iw*s,dh=ih*s;
+ const s=H/ih,dw=iw*s; /* 画像の上下がゲーム画面の上下にぴったり合うよう縦サイズに合わせて拡大・縮小 */
  ctx.save();ctx.globalAlpha=al;
- ctx.drawImage(im,(W-dw)/2,(H-dh)/2,dw,dh);
+ ctx.drawImage(im,(W-dw)/2,0,dw,H); /* 幅は中央配置、画面外は自動でクリップ */
  ctx.restore();
 }
 function drawBg(){
