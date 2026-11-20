@@ -42,8 +42,11 @@ class FakeAudioCtx{
 }
 class ImageStub{
  constructor(){this._src='';this.naturalWidth=1000;this.naturalHeight=1600}
- set src(v){this._src=v;this.naturalWidth=1000;this.naturalHeight=1600;this.onload&&this.onload()}
+ set src(v){this._src=v;
+  if(failRel&&v.indexOf('Tetris_image/')===0){this.onerror&&this.onerror();return}
+  this.naturalWidth=1000;this.naturalHeight=1600;this.onload&&this.onload()}
 }
+let failRel=false;
 let rafCb=null;
 const sb={document:doc,window:{AudioContext:FakeAudioCtx,webkitAudioContext:FakeAudioCtx},
  Image:ImageStub,performance:{now:()=>Date.now()},localStorage:{getItem(){return null},setItem(){}}};
@@ -54,7 +57,7 @@ src+='\n;globalThis.__T={board:function(){return board},cur:function(){return cu
  'MELODY:MELODY,CHORDS:CHORDS,BASS:BASS,S16:S16,gravityStep:gravityStep,draw:draw,tickMusic:tickMusic,'+
  'spawn:spawn,finishClear:finishClear,rotate:rotate,fits:fits,preview:preview,hardDrop:hardDrop,'+
  'onKey:onKey,stepFx:stepFx,stepBg:stepBg,fmt:fmt,loop:loop,reset:reset,setAudio:function(x){beep.ctx=x},'+
- 'state:function(){return state},bgImgs:bgImgs,BG_FILES:BG_FILES,loopFn:loop,resetFn:reset,'+
+ 'state:function(){return state},bgImgs:bgImgs,BG_FILES:BG_FILES,loadBg:loadBg,bgRel:bgRel,bgLocal:bgLocal,loopFn:loop,resetFn:reset,'+
  'vars:function(){return{fracY:fracY,dropT:dropT,score:score,lines:lines,level:level,overT:overT,'+
  'clearing:clearing,musT:musT,musI:musI,musOn:musOn,musStarted:musStarted,musStopAt:musStopAt,hold:hold}},'+
  '__set:function(k,v){switch(k){case"board":board=v;break;case"cur":cur=v;break;case"level":level=v;break;'+
@@ -236,6 +239,14 @@ console.log('--- BGM コロブチカ ---');
 console.log('--- 背景画像 ---');
 {
  ok(T.bgImgs.length===7,'all 7 images loaded from C:/Users/fangg/Downloads/Tetris_image');
+ ok(T.bgImgs[0].url.indexOf('Tetris_image/')===0,'relative path used first ('+T.bgImgs[0].url+')');
+ var local=T.BG_FILES.filter(function(f){return fs.existsSync('Tetris_image/'+f)});
+ ok(local.length===7,'all 7 images bundled in ./Tetris_image for Pages hosting');
+ /* 相対パスが無い環境（旧ローカル利用）では file:// へフォールバック */
+ failRel=true;T.bgImgs.length=0;T.loadBg();failRel=false;
+ ok(T.bgImgs.length===7,'fallback to local folder when relative path missing ('+T.bgImgs.length+')');
+ ok(T.bgImgs[0].url.indexOf('file:///C:/Users/fangg/Downloads/Tetris_image/')===0,'fallback URL = file:/// ('+T.bgImgs[0].url+')');
+ T.bgImgs.length=0;failRel=false;T.loadBg();
  var real=fs.readdirSync('C:/Users/fangg/Downloads/Tetris_image').filter(function(f){return /\.(jpg|jpeg|png|webp)$/i.test(f)});
  var missing=T.BG_FILES.filter(function(f){return real.indexOf(f)<0});
  ok(missing.length===0,'every BG_FILES entry exists on disk (missing: '+missing.join(',')+')');

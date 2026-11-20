@@ -366,9 +366,11 @@ function tickMusic(){
  }
 }
 
-/* ===== 背景画像（C:\Users\fangg\Downloads\Tetris_image） =====
-   画像の縦サイズ＝ゲーム画面高さに合わせて描画し、盤面内だけ暗くする */
+/* ===== 背景画像（Tetris_image） =====
+   縦サイズ＝ゲーム画面高さに合わせて描画し、盤面内だけ暗くする
+   読み込みは相対パス（GitHub Pages / 同梱画像）優先、無ければローカルフォルダへフォールバック */
 const BG_DIR='C:/Users/fangg/Downloads/Tetris_image/';
+const BG_REL='Tetris_image/';
 const BG_FILES=[
  'church-of-the-saviour-on-the-blood.jpg',
  'Gemini_Generated_Image_l1eevvl1eevvl1ee.jpg',
@@ -378,13 +380,20 @@ const BG_FILES=[
  '聖ワシリイ大聖堂_illust.jpg',
  '聖ワシリイ大聖堂_illust2.jpg'];
 const bgImgs=[];let bgIdx=0,bgPrev=null,bgFade=1,bgT=0;const BG_SWAP=9;
-function bgUrl(f){return 'file:///'+encodeURI(BG_DIR)+encodeURIComponent(f)}
+function bgRel(f){return BG_REL+encodeURI(f)}
+function bgLocal(f){return 'file:///'+encodeURI(BG_DIR)+encodeURIComponent(f)}
+function addBg(im){bgImgs.push(im);applyBodyBg()}
 function loadBg(){
  BG_FILES.forEach(function(f){
-  const im=new Image();im.url=bgUrl(f);
-  im.onload=function(){bgImgs.push(im);applyBodyBg()};
-  im.onerror=function(){};
-  im.src=bgUrl(f);
+  const im=new Image();im.url=bgRel(f);
+  im.onload=function(){addBg(im)};
+  im.onerror=function(){ /* 相対パスに無い場合のみローカル画像へ */
+   const im2=new Image();im2.url=bgLocal(f);
+   im2.onload=function(){addBg(im2)};
+   im2.onerror=function(){};
+   im2.src=bgLocal(f);
+  };
+  im.src=bgRel(f);
  });
 }
 function applyBodyBg(){
