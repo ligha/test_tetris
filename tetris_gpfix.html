@@ -1098,9 +1098,15 @@ function buildBg(){
   bgCv=bgCv||document.createElement('canvas');
   bgCv.width=W;bgCv.height=H;
   const x=bgCv.getContext('2d');
-  const s=Math.max(W/bgImg.naturalWidth,H/bgImg.naturalHeight);   // cover：盤面の上端から下端まで必ず一致
-  const sw=W/s,sh=H/s;
-  x.drawImage(bgImg,(bgImg.naturalWidth-sw)/2,(bgImg.naturalHeight-sh)/2,sw,sh,0,0,W,H);
+  const iw=bgImg.naturalWidth,ih=bgImg.naturalHeight;
+  // 余白用：cover で切り抜いたものを極小に縮めてから引き伸ばし、ぼかした下地にする
+  const sc=Math.max(W/iw,H/ih),cw=W/sc,ch=H/sc;
+  const t=document.createElement('canvas');t.width=Math.max(1,W>>4);t.height=Math.max(1,H>>4);
+  t.getContext('2d').drawImage(bgImg,(iw-cw)/2,(ih-ch)/2,cw,ch,0,0,t.width,t.height);
+  x.imageSmoothingEnabled=true;x.drawImage(t,0,0,W,H);
+  // 本体：画像全体が盤面の範囲に収まるよう縮小・拡大（contain）して中央に配置
+  const s=Math.min(W/iw,H/ih),dw=iw*s,dh=ih*s;
+  x.drawImage(bgImg,0,0,iw,ih,(W-dw)/2,(H-dh)/2,dw,dh);
   x.fillStyle='rgba(11,14,24,.35)';x.fillRect(0,0,W,H);          // ブロックを見やすくする薄い暗幕
 }
 bgImg.onload=buildBg;
