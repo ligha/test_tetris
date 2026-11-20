@@ -16,9 +16,10 @@
 html,body{touch-action:manipulation;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
 button{touch-action:manipulation}
 body{margin:0;min-height:100dvh;background:radial-gradient(1200px 800px at 50% -10%,#1a2035,#0f1220);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Meiryo,sans-serif;display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-start;padding:calc(14px + env(safe-area-inset-top)) calc(18px + env(safe-area-inset-bottom))}
+body::before{content:"";position:fixed;left:0;right:0;top:var(--bgt,0);height:var(--bgh,100%);z-index:-1;pointer-events:none;background:linear-gradient(rgba(11,14,24,.25),rgba(11,14,24,.25)),var(--pbg,none) center/cover no-repeat}   /* ページ背景：BGMの曲と連動して切り替わる */
 .game{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start;max-width:100%}
 canvas{display:block;max-width:100%;background:#0b0e18;border:1px solid var(--line);border-radius:10px}
-#board{box-shadow:0 12px 40px rgba(0,0,0,.45)}
+#board{background:transparent;box-shadow:0 12px 40px rgba(0,0,0,.45)}
 .side{width:190px;display:flex;flex-direction:column;gap:10px}
 .box{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px}
 .box h2{margin:0 0 8px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
@@ -1090,38 +1091,30 @@ const BG_IMGS=[                                  // 曲 i → 画像 i（曲は6
   "Tetris_image/聖ワシリイ大聖堂_illust.jpg",
   "Tetris_image/聖ワシリイ大聖堂_illust2.jpg"
 ];
-const bgImg=new Image();
-let bgCv=null;                                   // 盤面サイズに切り抜き済みの背景（毎フレームの描画を軽くする）
-function buildBg(){
-  if(!bgImg.naturalWidth)return;
-  const W=board.width,H=board.height;
-  bgCv=bgCv||document.createElement('canvas');
-  bgCv.width=W;bgCv.height=H;
-  const x=bgCv.getContext('2d');
-  const iw=bgImg.naturalWidth,ih=bgImg.naturalHeight;
-  // 余白用：cover で切り抜いたものを極小に縮めてから引き伸ばし、ぼかした下地にする
-  const sc=Math.max(W/iw,H/ih),cw=W/sc,ch=H/sc;
-  const t=document.createElement('canvas');t.width=Math.max(1,W>>4);t.height=Math.max(1,H>>4);
-  t.getContext('2d').drawImage(bgImg,(iw-cw)/2,(ih-ch)/2,cw,ch,0,0,t.width,t.height);
-  x.imageSmoothingEnabled=true;x.drawImage(t,0,0,W,H);
-  // 本体：画像全体が盤面の範囲に収まるよう縮小・拡大（contain）して中央に配置
-  const s=Math.min(W/iw,H/ih),dw=iw*s,dh=ih*s;
-  x.drawImage(bgImg,0,0,iw,ih,(W-dw)/2,(H-dh)/2,dw,dh);
-  x.fillStyle='rgba(11,14,24,.35)';x.fillRect(0,0,W,H);          // ブロックを見やすくする薄い暗幕
-}
-bgImg.onload=buildBg;
-function setBgForTrack(t){
+let bgSrc='';
+function setBgForTrack(t){                      // ページ背景をBGMの曲に合わせて切り替える
   const src=encodeURI(BG_IMGS[t%BG_IMGS.length]);
-  if(bgImg.getAttribute('src')===src)return;
-  bgImg.src=src;
+  if(bgSrc===src)return;
+  bgSrc=src;
+  document.documentElement.style.setProperty('--pbg','url("'+src+'")');
 }
 setBgForTrack(0);
+// ページ背景は盤面の上下より少しだけはみ出した帯にする
+const BG_OVERHANG=20;
+function fitPageBg(){
+  const r=board.getBoundingClientRect(),st=document.documentElement.style;
+  st.setProperty('--bgt',(r.top-BG_OVERHANG)+'px');
+  st.setProperty('--bgh',(r.height+BG_OVERHANG*2)+'px');
+}
+fitPageBg();
+addEventListener('resize',fitPageBg);addEventListener('scroll',fitPageBg,{passive:true});
+if(window.ResizeObserver)new ResizeObserver(fitPageBg).observe(board);
 
 function draw(){
   bctx.save();
-  bctx.fillStyle='#0b0e18';
-  bctx.fillRect(0,0,board.width,board.height);          // 上余白（TOP＝はみ出しブロック用）も含めて背景
-  if(bgCv)bctx.drawImage(bgCv,0,0);                      // 盤面の背景画像（BGMの曲に合わせて切替）
+  bctx.clearRect(0,0,board.width,board.height);          // 盤面は透明にしてページ背景（BGMの曲に合わせて切替）を見せる
+  bctx.fillStyle='rgba(11,14,24,.35)';                    // ブロックを見やすくする薄い暗幕
+  bctx.fillRect(0,0,board.width,board.height);
   if(FX.shake>0.1)bctx.translate((Math.random()-0.5)*FX.shake,(Math.random()-0.5)*FX.shake);
   bctx.translate(0,TOP);                                // 板を余白分だけ下にずらす（上のはみ出しは負のy）
   bctx.strokeStyle='rgba(255,255,255,.045)';bctx.lineWidth=1;
