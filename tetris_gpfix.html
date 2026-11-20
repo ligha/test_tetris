@@ -1113,7 +1113,7 @@ if(window.ResizeObserver)new ResizeObserver(fitPageBg).observe(board);
 function draw(){
   bctx.save();
   bctx.clearRect(0,0,board.width,board.height);          // 盤面は透明にしてページ背景（BGMの曲に合わせて切替）を見せる
-  bctx.fillStyle='rgba(11,14,24,.35)';                    // ブロックを見やすくする薄い暗幕
+  bctx.fillStyle='rgba(11,14,24,.55)';                  // ブロックを見やすくする薄い暗幕
   bctx.fillRect(0,0,board.width,board.height);
   if(FX.shake>0.1)bctx.translate((Math.random()-0.5)*FX.shake,(Math.random()-0.5)*FX.shake);
   bctx.translate(0,TOP);                                // 板を余白分だけ下にずらす（上のはみ出しは負のy）
