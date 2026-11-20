@@ -57,12 +57,13 @@ src+='\n;globalThis.__T={board:function(){return board},cur:function(){return cu
  'MELODY:MELODY,CHORDS:CHORDS,BASS:BASS,S16:S16,gravityStep:gravityStep,draw:draw,tickMusic:tickMusic,'+
  'spawn:spawn,finishClear:finishClear,rotate:rotate,fits:fits,preview:preview,hardDrop:hardDrop,'+
  'onKey:onKey,stepFx:stepFx,stepBg:stepBg,fmt:fmt,loop:loop,reset:reset,setAudio:function(x){beep.ctx=x},'+
- 'state:function(){return state},bgImgs:bgImgs,BG_FILES:BG_FILES,loadBg:loadBg,bgRel:bgRel,bgLocal:bgLocal,loopFn:loop,resetFn:reset,'+
+ 'state:function(){return state},bgImgs:bgImgs,BG_FILES:BG_FILES,loadBg:loadBg,bgRel:bgRel,bgLocal:bgLocal,loopFn:loop,resetFn:reset,B8:B8,'+
  'vars:function(){return{fracY:fracY,dropT:dropT,score:score,lines:lines,level:level,overT:overT,'+
- 'clearing:clearing,musT:musT,musI:musI,musOn:musOn,musStarted:musStarted,musStopAt:musStopAt,hold:hold}},'+
+ 'clearing:clearing,musT:musT,musI:musI,musOn:musOn,musStarted:musStarted,musStopAt:musStopAt,hold:hold,'+
+ 'swapT:swapT,swapArmed:swapArmed,bgIdx:bgIdx}},'+
  '__set:function(k,v){switch(k){case"board":board=v;break;case"cur":cur=v;break;case"level":level=v;break;'+
  'case"score":score=v;break;case"clearing":clearing=v;break;case"over":state="over";overT=v||0;break;'+
- 'case"musT":musT=v;break;case"musStarted":musStarted=v;break;case"musOn":musOn=v;break;'+
+ 'case"musT":musT=v;break;case"musI":musI=v;break;case"musStarted":musStarted=v;break;case"musOn":musOn=v;break;'+
  'case"musStopAt":musStopAt=v;break;case"play":state="play";break}}}';
 const fn=new Function('document','window','Image','performance','localStorage','requestAnimationFrame',
  'setTimeout','clearTimeout','navigator',src);
@@ -247,10 +248,11 @@ console.log('--- 背景画像 ---');
  ok(T.bgImgs.length===7,'fallback to local folder when relative path missing ('+T.bgImgs.length+')');
  ok(T.bgImgs[0].url.indexOf('file:///C:/Users/fangg/Downloads/Tetris_image/')===0,'fallback URL = file:/// ('+T.bgImgs[0].url+')');
  T.bgImgs.length=0;failRel=false;T.loadBg();
- var real=fs.readdirSync('C:/Users/fangg/Downloads/Tetris_image').filter(function(f){return /\.(jpg|jpeg|png|webp)$/i.test(f)});
+ var real=[];
+ if(fs.existsSync('Tetris_image'))real=fs.readdirSync('Tetris_image').filter(function(f){return /\.(jpg|jpeg|png|webp)$/i.test(f)});
  var missing=T.BG_FILES.filter(function(f){return real.indexOf(f)<0});
- ok(missing.length===0,'every BG_FILES entry exists on disk (missing: '+missing.join(',')+')');
- ok(real.length===T.BG_FILES.length,'covers every image in the folder ('+real.length+' files)');
+ ok(missing.length===0,'every BG_FILES entry exists in bundled folder (missing: '+missing.join(',')+')');
+ ok(real.length===T.BG_FILES.length,'bundled folder covers every image ('+real.length+' files)');
  ok(/Tetris_image/.test(bodyEl.style.backgroundImage||''),'page body background image set');
  boardRec.length=0;
  T.draw();
@@ -270,8 +272,42 @@ console.log('--- 背景画像 ---');
  var darkIdx=-1;
  for(var i=0;i<boardRec.length;i++)if(i>imIdx&&boardRec[i].op==='fillRect'&&String(boardRec[i].fill).indexOf('rgba(0,0,0,.45)')===0){darkIdx=i;break}
  ok(darkIdx>imIdx,'board-area background darkened after image');
- for(var i=0;i<11;i++)T.stepBg(1);
- ok(String(bodyEl.style.backgroundImage).indexOf('Gemini_Generated_Image_l1eevvl1eevvl1ee')>=0,'slide switches after ~9s');
+ /* --- 画像切替はBGMのメロディ節区（8小節=128ユニット）に同期 --- */
+ var acc=0,b8i=-1;
+ for(var i=0;i<T.MELODY.length;i++){if(acc===128){b8i=i;break}acc+=T.MELODY[i][1]}
+ ok(T.B8===b8i,'B8 boundary index at 128 units (bar 8 start, index '+T.B8+')');
+ var a3=new FakeAudioCtx();a3.currentTime=24;
+ T.setAudio(a3);
+ T.__set('play');T.__set('musOn',true);T.__set('musStarted',true);
+ /* index37(b7中)から節区境界index41(128units=chorus終了)へ: 2+2+8+8=20units=2.0s */
+ var startIdx=37,startT=22.4;
+ T.__set('musI',startIdx);T.__set('musT',startT);T.__set('musStopAt',0);
+ T.tickMusic(); /* 節区境界(musI===B8)を予定すべき */
+ ok(T.vars().swapArmed===true,'image swap scheduled at melody phrase boundary (swapT='+Math.round(T.vars().swapT*100)/100+')');
+ var expSwap=startT+20*T.S16; /* 20 units 経過 = 128units 地点 */
+ ok(T.vars().swapT===expSwap,'swap time = boundary start time exactly ('+T.vars().swapT+' vs '+expSwap+')');
+ var bg0=String(bodyEl.style.backgroundImage);
+ T.stepBg(1); /* currentTime=22 < swapT → まだ切替えない */
+ ok(String(bodyEl.style.backgroundImage)===bg0,'no image swap before music boundary');
+ a3.currentTime=T.vars().swapT+0.05;
+ T.stepBg(1);
+ ok(String(bodyEl.style.backgroundImage)!==bg0,'image swaps exactly at music phrase boundary');
+ /* ループ頭(musI===0)でも予定される */
+ a3.currentTime=24.2;
+ T.__set('musI',T.MELODY.length-2);T.__set('musT',24.3);
+ T.tickMusic();
+ ok(T.vars().swapArmed===true,'swap also scheduled at melody loop wrap');
+ /* BGMオフなら従来タイマー(9秒)で切替 */
+ T.__set('musOn',false);
+ var bg1=String(bodyEl.style.backgroundImage),sw=false;
+ for(var i=0;i<10;i++){T.stepBg(1);if(String(bodyEl.style.backgroundImage)!==bg1){sw=true;break}}
+ ok(sw,'timer fallback switches after ~9s when BGM off');
+ /* リスタートで切替予定クリア */
+ T.__set('musOn',true);
+ T.__set('musI',T.MELODY.length-2);T.__set('musT',a3.currentTime+.1);
+ T.tickMusic();
+ T.reset();
+ ok(T.vars().swapArmed===false&&T.vars().swapT===0,'restart clears scheduled swap');
 }
 // ---- 10. スモーク（3000フレーム + 入力乱舞） ----
 console.log('--- スモーク ---');

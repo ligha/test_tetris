@@ -227,6 +227,7 @@ function reset(){
  hold=null;holdUsed=false;
  dropT=0;fracY=0;lockT=0;resets=0;dir=0;keys={l:0,r:0,d:0};
  if(musStopAt){musT=musStopAt;musStopAt=0}
+ swapT=0;swapArmed=false;
  state='play';
  spawn();updateStats();
 }
@@ -363,6 +364,7 @@ function tickMusic(){
   const bb=BASS[musI];
   if(bb>0)musNote(m2f(bb),musT,dur*.85,.085,'triangle',420);
   musT+=dur;musI=(musI+1)%MELODY.length;
+  if(musI===0||musI===B8){swapT=musT;swapArmed=true} /* 節区境界の開始時刻を記録（未来予定） */
  }
 }
 
@@ -380,6 +382,9 @@ const BG_FILES=[
  '聖ワシリイ大聖堂_illust.jpg',
  '聖ワシリイ大聖堂_illust2.jpg'];
 const bgImgs=[];let bgIdx=0,bgPrev=null,bgFade=1,bgT=0;const BG_SWAP=9;
+/* 画像切り替えは BGM のメロディ節区（8小節=128ユニット, 約12.8秒）とループ頭に同期 */
+const B8=(function(){let acc=0;for(let i=0;i<MELODY.length;i++){if(acc===128)return i;acc+=MELODY[i][1]}return -1})();
+let swapT=0,swapArmed=false;
 function bgRel(f){return BG_REL+encodeURI(f)}
 function bgLocal(f){return 'file:///'+encodeURI(BG_DIR)+encodeURIComponent(f)}
 function addBg(im){bgImgs.push(im);applyBodyBg()}
@@ -402,13 +407,18 @@ function applyBodyBg(){
 function stepBg(dt){
  if(bgImgs.length<2)return;
  bgFade=Math.min(1,bgFade+dt/.8);
- bgT+=dt;
- if(bgT>=BG_SWAP&&bgFade>=1){
-  bgPrev=bgImgs[bgIdx%bgImgs.length];
-  bgIdx=(bgIdx+1)%bgImgs.length;
-  bgT=0;bgFade=0;
-  applyBodyBg();
- }
+ const a=AC();
+ const mus=!!a&&musOn&&musStarted;
+ let go=false;
+ if(mus&&swapArmed&&a.currentTime>=swapT){swapArmed=false;bgT=0;go=true} /* BGMの節区切りで画像切替 */
+ if(!mus){bgT+=dt;if(bgT>=BG_SWAP)go=true} /* BGMオフ時は従来タイマー */
+ if(go&&bgFade>=1)bgNext();
+}
+function bgNext(){
+ bgPrev=bgImgs[bgIdx%bgImgs.length];
+ bgIdx=(bgIdx+1)%bgImgs.length;
+ bgFade=0;
+ applyBodyBg();
 }
 function drawImgCover(im,al){
  const iw=im.naturalWidth||320,ih=im.naturalHeight||640;
