@@ -54,18 +54,6 @@ button.primary:active{background:#3a5b93}
   .box.hold{grid-column:3;grid-row:1}
   .box.next{grid-column:3;grid-row:2}
 }
-/* 広い画面：盤面の左右に画像を置き、盤面と同じ縦サイズに合わせる */
-.deco{display:none}
-@media(min-width:961px){
-  .game{grid-template-columns:clamp(80px,calc((100vw - 800px)/2),240px) 190px auto 190px clamp(80px,calc((100vw - 800px)/2),240px)}
-  .box.stats,.pad{grid-column:2}
-  #board{grid-column:3}
-  .box.hold,.box.next{grid-column:4}
-  .deco{display:block;position:relative;align-self:start;overflow:hidden;border:1px solid var(--line);border-radius:10px;background:#0b0e18;box-shadow:0 12px 40px rgba(0,0,0,.45);min-height:0}
-  .deco img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:opacity .6s ease}
-  .deco-l{grid-column:1;grid-row:1/span 2}
-  .deco-r{grid-column:5;grid-row:1/span 2}
-}
 @media(max-width:720px){
   .info{display:none}
   html,body{height:100%;overflow:hidden;overscroll-behavior:none}
@@ -89,7 +77,6 @@ button.primary:active{background:#3a5b93}
 </head>
 <body>
 <div class="game">
-  <div class="deco deco-l"><img id="decoL" alt=""></div>
   <div class="left">
     <canvas id="board" width="240" height="504"></canvas>
     <div class="pad" id="pad">
@@ -118,7 +105,6 @@ button.primary:active{background:#3a5b93}
       <div class="stat"><span>TIME</span><b id="time">0:00</b></div>
     </div>
   </div>
-  <div class="deco deco-r"><img id="decoR" alt=""></div>
 </div>
 <div class="info">
     <div class="box keys kbdbox">
@@ -623,6 +609,7 @@ function bgmTick(){
     if(bgmBar>=tr.bars.length)bgmBar=0;
     if(bgmPending!==bgmTrack){                    // 小節の区切り（最大1小節）で曲を切り替える
       bgmTrack=bgmPending;bgmBar=0;bgmUi();
+      setBgForTrack(bgmTrack);   // 曲に合わせて盤面の背景画像も切替
     }
   }
 }
@@ -652,6 +639,7 @@ function bgmStart(){
     bgmLfo=actx.createOscillator();bgmLfo.type='sine';bgmLfo.frequency.value=FM_VIB;
     bgmVib=actx.createGain();bgmVib.gain.value=FM_VIB_DEPTH;bgmLfo.connect(bgmVib);bgmLfo.start();
     bgmPlaying=true;bgmTrack=bgmTrackForLevel(level);bgmPending=bgmTrack;bgmBar=0;bgmNext=actx.currentTime+0.15;
+    setBgForTrack(bgmTrack);
     bgmTimer=setInterval(bgmTick,60);bgmTick();
   }catch(e){}
   bgmUi();
@@ -1092,10 +1080,42 @@ function drawStart(){
   bctx.globalAlpha=1;
   bctx.restore();
 }
+// ---- 盤面の背景画像（Tetris_image）：BGMの曲ごとに切り替え、盤面の上下いっぱいに合わせる ----
+const BG_IMGS=[                                  // 曲 i → 画像 i（曲は6つ、画像は7枚）
+  "Tetris_image/Gemini_Generated_Image_l1eevvl1eevvl1ee.jpg",
+  "Tetris_image/Gemini_Generated_Image_qn6hqn6hqn6hqn6h.jpg",
+  "Tetris_image/Sergiyev.jpg",
+  "Tetris_image/church-of-the-saviour-on-the-blood.jpg",
+  "Tetris_image/聖ワシリイ大聖堂.jpg",
+  "Tetris_image/聖ワシリイ大聖堂_illust.jpg",
+  "Tetris_image/聖ワシリイ大聖堂_illust2.jpg"
+];
+const bgImg=new Image();
+let bgCv=null;                                   // 盤面サイズに切り抜き済みの背景（毎フレームの描画を軽くする）
+function buildBg(){
+  if(!bgImg.naturalWidth)return;
+  const W=board.width,H=board.height;
+  bgCv=bgCv||document.createElement('canvas');
+  bgCv.width=W;bgCv.height=H;
+  const x=bgCv.getContext('2d');
+  const s=Math.max(W/bgImg.naturalWidth,H/bgImg.naturalHeight);   // cover：盤面の上端から下端まで必ず一致
+  const sw=W/s,sh=H/s;
+  x.drawImage(bgImg,(bgImg.naturalWidth-sw)/2,(bgImg.naturalHeight-sh)/2,sw,sh,0,0,W,H);
+  x.fillStyle='rgba(11,14,24,.35)';x.fillRect(0,0,W,H);          // ブロックを見やすくする薄い暗幕
+}
+bgImg.onload=buildBg;
+function setBgForTrack(t){
+  const src=encodeURI(BG_IMGS[t%BG_IMGS.length]);
+  if(bgImg.getAttribute('src')===src)return;
+  bgImg.src=src;
+}
+setBgForTrack(0);
+
 function draw(){
   bctx.save();
   bctx.fillStyle='#0b0e18';
   bctx.fillRect(0,0,board.width,board.height);          // 上余白（TOP＝はみ出しブロック用）も含めて背景
+  if(bgCv)bctx.drawImage(bgCv,0,0);                      // 盤面の背景画像（BGMの曲に合わせて切替）
   if(FX.shake>0.1)bctx.translate((Math.random()-0.5)*FX.shake,(Math.random()-0.5)*FX.shake);
   bctx.translate(0,TOP);                                // 板を余白分だけ下にずらす（上のはみ出しは負のy）
   bctx.strokeStyle='rgba(255,255,255,.045)';bctx.lineWidth=1;
@@ -1585,40 +1605,6 @@ loadHi();
 loadReplays();
 reset();
 requestAnimationFrame(loop);
-</script>
-<script>
-/* 盤面の左右に表示する画像（Tetris_image フォルダ）を一定間隔で切り替える */
-(function(){
-  var imgs = [
-    "Tetris_image/Gemini_Generated_Image_l1eevvl1eevvl1ee.jpg",
-    "Tetris_image/Gemini_Generated_Image_qn6hqn6hqn6hqn6h.jpg",
-    "Tetris_image/Sergiyev.jpg",
-    "Tetris_image/church-of-the-saviour-on-the-blood.jpg",
-    "Tetris_image/聖ワシリイ大聖堂.jpg",
-    "Tetris_image/聖ワシリイ大聖堂_illust.jpg",
-    "Tetris_image/聖ワシリイ大聖堂_illust2.jpg"
-  ];
-  var L = document.getElementById("decoL"), R = document.getElementById("decoR");
-  if (!L || !R) return;
-  /* 画像の縦サイズを盤面（#board）の縦サイズに揃える */
-  var board = document.getElementById("board");
-  function fitToBoard(){
-    var h = board.getBoundingClientRect().height + "px";
-    L.parentElement.style.height = h;
-    R.parentElement.style.height = h;
-  }
-  fitToBoard();
-  window.addEventListener("resize", fitToBoard);
-  if (window.ResizeObserver) new ResizeObserver(fitToBoard).observe(board);
-  var idx = 0;
-  function show(el, i){ el.src = encodeURI(imgs[i % imgs.length]); }
-  show(L, 0); show(R, Math.floor(imgs.length / 2));
-  setInterval(function(){
-    idx = (idx + 1) % imgs.length;
-    show(L, idx);
-    show(R, idx + Math.floor(imgs.length / 2));
-  }, 8000);
-})();
 </script>
 </body>
 </html>
